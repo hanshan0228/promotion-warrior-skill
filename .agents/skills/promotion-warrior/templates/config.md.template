@@ -1,0 +1,21 @@
+# Config Template for {PRODUCT_NAME}
+
+niche: "{PRODUCT_NAME} ({PRODUCT_CATEGORY})"
+timezone: "America/New_York"
+
+target_audience:
+  pain_points:
+    {PAIN_POINTS}
+  intent_signals:
+    en:
+      {INTENT_SIGNALS}
+
+keywords:
+  en:
+    {KEYWORDS}
+
+# Conversion logic
+conversion:
+  goal: "Conversion via {CONVERSION_TYPE}"
+  cta_en: "{CTA_TEXT}"
+  affiliate_link: "{AFFILIATE_LINK}"
