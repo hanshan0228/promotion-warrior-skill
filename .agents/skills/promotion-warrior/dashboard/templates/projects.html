@@ -1,0 +1,369 @@
+{% extends "layout.html" %}
+
+{% block title %}Projects | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="space-y-8 relative">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-layer-group mr-3 text-indigo-600"></i> Project Hub
+        </h2>
+        <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center shadow-sm">
+            <i class="fas fa-plus mr-2"></i> New Project
+        </button>
+    </div>
+
+    <div id="projects-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="animate-pulse bg-white border border-gray-100 h-48 rounded-xl"></div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div id="new-project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Create New Project</h3>
+                <button onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="new-project-form" onsubmit="createProject(event)" class="space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
+                        <input type="text" id="proj-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. SaaS Tool Affiliate">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate Link</label>
+                        <input type="url" id="proj-link" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://...">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Subreddits (comma separated)</label>
+                    <input type="text" id="proj-subs" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="SaaS, entrepreneur, marketing">
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Frustration Keywords</label>
+                        <textarea id="proj-frust" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="zero traffic, no sales..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Intent Keywords</label>
+                        <textarea id="proj-intent" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="how, help, recommend..."></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Auto-Reply Templates (One per line)</label>
+                    <textarea id="proj-replies" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="Check out my bio for a tool that solves this!"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <input type="text" id="proj-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Description of the niche">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Daily Budget ($)</label>
+                        <input type="number" id="proj-budget" value="0" step="0.1" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Group</label>
+                        <select id="proj-group" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="group_default">group_default</option>
+                            <option value="group_dating">group_dating</option>
+                            <option value="group_saas">group_saas</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="toggleModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="submit" id="btn-submit-proj" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
+                        Create Project
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    <!-- Edit Config Modal -->
+    <div id="edit-config-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-900">Edit Configuration: <span id="edit-config-title" class="text-indigo-600"></span></h3>
+                <button onclick="toggleConfigModal(false)" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="edit-config-form" onsubmit="saveConfig(event)" class="space-y-4">
+                <input type="hidden" id="edit-config-id">
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate / Target Link</label>
+                    <input type="url" id="conf-link" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://...">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Frustration Keywords (comma separated)</label>
+                        <textarea id="conf-frust" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="zero matches, shadowbanned, giving up..."></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Intent Keywords (comma separated)</label>
+                        <textarea id="conf-intent" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="how, help, recommend..."></textarea>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Auto-Reply Templates (en_wingman) - One per line</label>
+                    <textarea id="conf-replies" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" placeholder="Bro, check my bio for a quick guide...\nMan, the algorithm is brutal..."></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Raw YAML Config (Advanced)</label>
+                    <p class="text-[10px] text-gray-500 mb-2">Directly edit the niche's configuration YAML below. Be careful with indentation.</p>
+                    <textarea id="conf-yaml" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="6"></textarea>
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="toggleConfigModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="submit" id="btn-save-config" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
+                        Save Configuration
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/js-yaml/4.1.0/js-yaml.min.js"></script>
+<script>
+    function toggleModal(show) {
+        const modal = document.getElementById('new-project-modal');
+        if (show) {
+            modal.classList.remove('hidden');
+        } else {
+            modal.classList.add('hidden');
+            document.getElementById('new-project-form').reset();
+        }
+    }
+
+    function toggleConfigModal(show, projectId = '') {
+        const modal = document.getElementById('edit-config-modal');
+        if (show) {
+            modal.classList.remove('hidden');
+            document.getElementById('edit-config-title').innerText = projectId;
+            document.getElementById('edit-config-id').value = projectId;
+            loadConfigForProject(projectId);
+        } else {
+            modal.classList.add('hidden');
+            document.getElementById('edit-config-form').reset();
+        }
+    }
+
+    async function loadConfigForProject(id) {
+        const ta = document.getElementById('conf-yaml');
+        const linkInp = document.getElementById('conf-link');
+        const frustInp = document.getElementById('conf-frust');
+        const intentInp = document.getElementById('conf-intent');
+        const repliesInp = document.getElementById('conf-replies');
+
+        ta.value = 'Loading...';
+        linkInp.value = '';
+        frustInp.value = '';
+        intentInp.value = '';
+        repliesInp.value = '';
+
+        try {
+            const res = await fetch(`/api/projects/${id}/config`);
+            const data = await res.json();
+
+            if (data.config) {
+                ta.value = jsyaml.dump(data.config);
+
+                if (data.config.conversion && data.config.conversion.affiliate_link) {
+                    linkInp.value = data.config.conversion.affiliate_link;
+                }
+
+                if (data.config.scoring_rules) {
+                    if (data.config.scoring_rules.frustration_keywords) {
+                        frustInp.value = Object.keys(data.config.scoring_rules.frustration_keywords).join(', ');
+                    }
+                    if (data.config.scoring_rules.intent_keywords) {
+                        intentInp.value = data.config.scoring_rules.intent_keywords.join(', ');
+                    }
+                }
+
+                if (data.config.responses && data.config.responses.FIX && data.config.responses.FIX.en_wingman) {
+                    repliesInp.value = data.config.responses.FIX.en_wingman.join('\n');
+                }
+            } else {
+                ta.value = '';
+            }
+        } catch (e) {
+            ta.value = 'Error loading configuration.';
+        }
+    }
+
+    async function saveConfig(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-config');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+        const id = document.getElementById('edit-config-id').value;
+        const yamlStr = document.getElementById('conf-yaml').value;
+        const link = document.getElementById('conf-link').value;
+        const frust = document.getElementById('conf-frust').value;
+        const intent = document.getElementById('conf-intent').value;
+        const replies = document.getElementById('conf-replies').value;
+
+        try {
+            let configObj = jsyaml.load(yamlStr) || {};
+
+            if (link) {
+                if (!configObj.conversion) configObj.conversion = {};
+                configObj.conversion.affiliate_link = link;
+            }
+
+            if (!configObj.scoring_rules) configObj.scoring_rules = {};
+            if (frust) {
+                const keys = frust.split(',').map(s => s.trim()).filter(Boolean);
+                configObj.scoring_rules.frustration_keywords = keys.reduce((acc, k) => { acc[k] = 30; return acc; }, {});
+            }
+            if (intent) {
+                configObj.scoring_rules.intent_keywords = intent.split(',').map(s => s.trim()).filter(Boolean);
+            }
+
+            if (replies) {
+                if (!configObj.responses) configObj.responses = { FIX: { en_wingman: [], en_coach_1: [] } };
+                if (!configObj.responses.FIX) configObj.responses.FIX = { en_wingman: [], en_coach_1: [] };
+                configObj.responses.FIX.en_wingman = replies.split('\n').map(s => s.trim()).filter(Boolean);
+            }
+
+            // Sync visual fields back to the YAML view before sending
+            document.getElementById('conf-yaml').value = jsyaml.dump(configObj);
+
+            const res = await fetch(`/api/projects/${id}/config`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(configObj)
+            });
+
+            if (res.ok) {
+                toggleConfigModal(false);
+                alert('Configuration saved successfully!');
+            } else {
+                alert('Failed to save config.');
+            }
+        } catch (error) {
+            alert('Invalid YAML format or network error.');
+        } finally {
+            btn.innerHTML = 'Save Configuration';
+            btn.disabled = false;
+        }
+    }
+
+    async function createProject(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-submit-proj');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+
+        const payload = {
+            name: document.getElementById('proj-name').value,
+            notes: document.getElementById('proj-notes').value,
+            budget_daily_usd: parseFloat(document.getElementById('proj-budget').value),
+            account_group: document.getElementById('proj-group').value,
+            affiliate_link: document.getElementById('proj-link').value,
+            subreddits: document.getElementById('proj-subs').value,
+            frustration_keywords: document.getElementById('proj-frust').value,
+            intent_keywords: document.getElementById('proj-intent').value,
+            reply_templates: document.getElementById('proj-replies').value
+        };
+
+        try {
+            const res = await fetch('/api/projects', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                toggleModal(false);
+                loadProjects();
+            } else {
+                alert('Failed to create: ' + (await res.json()).detail);
+            }
+        } catch (error) {
+            alert('Request failed');
+        } finally {
+            btn.innerHTML = 'Create Project';
+            btn.disabled = false;
+        }
+    }
+
+    async function loadProjects() {
+        try {
+            const res = await fetch('/api/projects');
+            const data = await res.json();
+            const grid = document.getElementById('projects-grid');
+
+            if (data.projects && data.projects.length > 0) {
+                grid.innerHTML = data.projects.map(p => `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover-card transition-all relative overflow-hidden">
+                        <div class="absolute top-0 left-0 w-1 h-full ${p.status === 'active' ? 'bg-green-500' : 'bg-gray-300'}"></div>
+                        <div class="flex justify-between items-start mb-4">
+                            <div>
+                                <h3 class="font-bold text-lg text-gray-900">${p.name}</h3>
+                                <p class="text-xs text-gray-500 font-mono mt-1">${p.id}</p>
+                            </div>
+                            <label class="relative inline-flex items-center cursor-pointer">
+                                <input type="checkbox" class="sr-only peer" ${p.status === 'active' ? 'checked' : ''} onchange="toggleProject('${p.id}', this.checked)">
+                                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-green-500"></div>
+                            </label>
+                        </div>
+                        <div class="space-y-3 mb-6">
+                            <p class="text-sm text-gray-600 line-clamp-2">${p.notes}</p>
+                            <div class="flex space-x-4 text-xs">
+                                <div><span class="text-gray-400 block mb-0.5">Budget</span><span class="font-semibold text-gray-700">$${p.budget_daily_usd}/day</span></div>
+                                <div><span class="text-gray-400 block mb-0.5">Start Date</span><span class="font-semibold text-gray-700">${p.start_date}</span></div>
+                            </div>
+                        </div>
+                        <div class="pt-4 border-t border-gray-50 flex justify-between items-center">
+                            <span class="text-xs font-mono text-gray-400 truncate max-w-[150px]">${p.account_group}</span>
+                            <button onclick="toggleConfigModal(true, '${p.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold transition-colors">Edit Config</button>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                grid.innerHTML = '<div class="col-span-full p-8 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">No projects found. Create one to get started.</div>';
+            }
+        } catch (e) {
+            console.error('Failed to load projects', e);
+        }
+    }
+
+    async function toggleProject(id, isActive) {
+        const status = isActive ? 'active' : 'inactive';
+        try {
+            const res = await fetch('/api/projects/toggle', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id, status })
+            });
+            if (!res.ok) {
+                alert('Failed to update status: ' + (await res.json()).detail);
+                loadProjects(); // Revert toggle visually
+            }
+        } catch (e) {
+            alert('Request failed');
+            loadProjects();
+        }
+    }
+
+    loadProjects();
+</script>
+{% endblock %}

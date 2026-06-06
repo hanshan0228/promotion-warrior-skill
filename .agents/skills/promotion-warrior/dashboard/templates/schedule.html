@@ -1,0 +1,137 @@
+{% extends "layout.html" %}
+
+{% block title %}Schedule | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+        <div class="inline-flex items-center justify-center p-4 bg-indigo-50 rounded-full mb-6 text-indigo-600">
+            <i class="fas fa-calendar-check text-3xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">Service Scheduler</h2>
+        <p class="text-gray-500 max-w-md mx-auto mb-8">Manage how frequently the Dating Engine巡查 script runs in the background using macOS native launchd.</p>
+
+        <div id="schedule-status-banner" class="p-6 rounded-2xl border-2 transition-all mb-8">
+            <div class="flex items-center justify-center space-x-4">
+                <div id="schedule-dot" class="h-4 w-4 rounded-full"></div>
+                <span id="schedule-text" class="text-lg font-bold uppercase tracking-wider">Checking Status...</span>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-8">
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Cadence</p>
+                <div class="flex items-center space-x-2">
+                    <select id="sched-interval" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-1 font-bold">
+                        <option value="900">Every 15 Minutes</option>
+                        <option value="1800" selected>Every 30 Minutes</option>
+                        <option value="3600">Every 1 Hour</option>
+                        <option value="7200">Every 2 Hours</option>
+                    </select>
+                    <button onclick="updateInterval()" class="text-[10px] bg-indigo-600 text-white px-2 py-1 rounded font-bold hover:bg-indigo-700 transition-colors">Apply</button>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Target Script</p>
+                <code class="text-xs font-bold text-indigo-600">enhanced-check.sh</code>
+            </div>
+        </div>
+
+        <div id="schedule-action-area" class="flex justify-center">
+            <button onclick="toggleSchedulerInPage(true)" id="btn-start-page" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center">
+                <i class="fas fa-play-circle mr-2 text-lg"></i> Enable Background Patrol
+            </button>
+            <button onclick="toggleSchedulerInPage(false)" id="btn-stop-page" class="hidden bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center">
+                <i class="fas fa-stop-circle mr-2 text-lg"></i> Disable Background Patrol
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-900 mb-4">LaunchAgent Details</h3>
+        <div class="space-y-4">
+            <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
+                <span class="text-gray-500 font-medium">Identifier</span>
+                <span class="font-mono font-bold text-gray-900 text-xs">com.han.promotion-warrior</span>
+            </div>
+            <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
+                <span class="text-gray-500 font-medium">Plist Location</span>
+                <span class="font-mono font-bold text-gray-900 text-[10px]">~/Library/LaunchAgents/...</span>
+            </div>
+            <div class="flex justify-between items-center text-sm">
+                <span class="text-gray-500 font-medium">Logs Redirection</span>
+                <span class="font-mono font-bold text-indigo-600 text-xs">/tmp/dating-monitor.log</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function checkSchedule() {
+        try {
+            const res = await fetch('/api/status');
+            const data = await res.json();
+            const banner = document.getElementById('schedule-status-banner');
+            const dot = document.getElementById('schedule-dot');
+            const text = document.getElementById('schedule-text');
+            const btnStart = document.getElementById('btn-start-page');
+            const btnStop = document.getElementById('btn-stop-page');
+            const intervalSel = document.getElementById('sched-interval');
+
+            if (data.launchd_active) {
+                banner.className = 'p-6 rounded-2xl border-2 border-green-200 bg-green-50 mb-8';
+                dot.className = 'h-4 w-4 rounded-full bg-green-500 animate-pulse';
+                text.innerText = 'Scheduler Active';
+                text.className = 'text-lg font-bold uppercase tracking-wider text-green-700';
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+
+                if (data.launchd_interval) {
+                    intervalSel.value = data.launchd_interval;
+                }
+            } else {
+                banner.className = 'p-6 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-8';
+                dot.className = 'h-4 w-4 rounded-full bg-gray-400';
+                text.innerText = 'Scheduler Inactive';
+                text.className = 'text-lg font-bold uppercase tracking-wider text-gray-600';
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function toggleSchedulerInPage(start) {
+        const interval = document.getElementById('sched-interval').value;
+        const endpoint = start ? '/api/control/start' : '/api/control/stop';
+        try {
+            const res = await fetch(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ interval_seconds: parseInt(interval) })
+            });
+            if (res.ok) {
+                checkSchedule();
+                alert(start ? 'Scheduler enabled!' : 'Scheduler disabled.');
+            } else {
+                alert('Failed to update scheduler.');
+            }
+        } catch (e) { alert('Request failed'); }
+    }
+
+    async function updateInterval() {
+        // If already active, restart with new interval. If not, just alert.
+        const res = await fetch('/api/status');
+        const data = await res.json();
+        if (data.launchd_active) {
+            await toggleSchedulerInPage(true);
+        } else {
+            alert('Interval selected. Enable the patrol to apply it.');
+        }
+    }
+
+    checkSchedule();
+    setInterval(checkSchedule, 10000);
+</script>
+{% endblock %}

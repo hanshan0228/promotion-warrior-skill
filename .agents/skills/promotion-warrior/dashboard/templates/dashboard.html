@@ -1,0 +1,263 @@
+{% extends "layout.html" %}
+
+{% block title %}Dashboard | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Service Status Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Service Status</h3>
+            <div id="service-indicator" class="p-2 bg-gray-50 rounded-lg">
+                <i class="fas fa-microchip text-gray-400"></i>
+            </div>
+        </div>
+        <div class="flex items-baseline">
+            <span id="run-state-text" class="text-2xl font-bold text-gray-900">Loading...</span>
+            <span id="run-state-badge" class="ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-gray-100 text-gray-600">—</span>
+        </div>
+        <div class="mt-4 text-sm text-gray-500 flex items-center">
+            <i class="far fa-clock mr-2"></i>
+            Last log: <span id="last-log-time" class="ml-1 font-medium">—</span>
+        </div>
+        <div class="mt-6 flex space-x-3">
+            <button onclick="runNow()" id="btn-run-now" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center justify-center">
+                <i class="fas fa-play mr-2"></i> Run Now
+            </button>
+        </div>
+    </div>
+
+    <!-- Active Niche Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Active Niche</h3>
+            <div class="p-2 bg-indigo-50 rounded-lg">
+                <i class="fas fa-bullseye text-indigo-600"></i>
+            </div>
+        </div>
+        <div class="flex items-baseline">
+            <span id="niche-name" class="text-xl font-bold text-gray-900 truncate">Loading...</span>
+        </div>
+        <div class="mt-4 grid grid-cols-2 gap-4">
+            <div class="text-xs">
+                <span class="block text-gray-400 mb-1">Status</span>
+                <span id="niche-status" class="font-semibold text-gray-700">—</span>
+            </div>
+            <div class="text-xs">
+                <span class="block text-gray-400 mb-1">Priority</span>
+                <span id="niche-priority" class="font-semibold text-gray-700">—</span>
+            </div>
+        </div>
+        <div class="mt-6">
+            <a href="/config" class="text-sm text-indigo-600 font-semibold hover:text-indigo-500 flex items-center">
+                View niche details <i class="fas fa-chevron-right ml-2 text-xs"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- Notifications Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Notifications</h3>
+            <div class="p-2 bg-yellow-50 rounded-lg">
+                <i class="fas fa-bell text-yellow-600"></i>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <div id="bark-badge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">Bark: Checking...</div>
+            <div id="quiet-hours-badge" class="px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700">Quiet Hours: ON</div>
+        </div>
+        <div class="mt-4">
+            <div class="text-xs text-gray-400 mb-2">Reply Queues</div>
+            <div class="flex justify-between items-center bg-gray-50 rounded-lg p-2 mb-2 border border-gray-100">
+                <span class="text-xs font-medium text-gray-600">P0 (Urgent)</span>
+                <span id="q-p0" class="text-xs font-bold text-red-600 bg-red-50 px-2 rounded-full">0</span>
+            </div>
+            <div class="flex justify-between items-center bg-gray-50 rounded-lg p-2 border border-gray-100">
+                <span class="text-xs font-medium text-gray-600">P1 (Priority)</span>
+                <span id="q-p1" class="text-xs font-bold text-orange-600 bg-orange-50 px-2 rounded-full">0</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Logs Preview Section -->
+<div class="mt-8 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <h3 class="font-bold text-gray-900 flex items-center">
+            <i class="fas fa-terminal mr-2 text-indigo-600"></i> Recent Execution Logs
+        </h3>
+        <a href="/logs" class="text-sm text-indigo-600 font-semibold hover:text-indigo-500">Full logs</a>
+    </div>
+    <div class="p-0">
+        <pre id="log-container" class="bg-gray-900 text-gray-300 p-4 font-mono text-xs overflow-x-auto leading-relaxed max-h-80 overflow-y-auto">Loading logs...</pre>
+    </div>
+</div>
+
+<!-- Control Panel Section -->
+<div class="mt-8 grid grid-cols-1 lg:grid-cols-2 gap-8">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-cogs mr-2 text-indigo-600"></i> Advanced Controls
+        </h3>
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 transition-all hover:border-indigo-100">
+                <div>
+                    <p class="text-sm font-bold text-gray-900">Background Scheduler</p>
+                    <p class="text-xs text-gray-500">Run monitor automatically via launchd</p>
+                </div>
+                <div id="scheduler-controls">
+                    <button onclick="toggleScheduler(true)" id="btn-start" class="bg-green-600 hover:bg-green-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">Start</button>
+                    <button onclick="toggleScheduler(false)" id="btn-stop" class="hidden bg-red-600 hover:bg-red-700 text-white px-4 py-1.5 rounded-lg text-xs font-bold transition-colors">Stop</button>
+                </div>
+            </div>
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-xl border border-gray-100 transition-all hover:border-indigo-100">
+                <div>
+                    <p class="text-sm font-bold text-gray-900">Push Notifications</p>
+                    <p class="text-xs text-gray-500">Verify Bark integration is working</p>
+                </div>
+                <button onclick="testNotify()" class="text-indigo-600 bg-indigo-50 hover:bg-indigo-100 border border-indigo-100 px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Test Bark</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+            <i class="fas fa-info-circle mr-2 text-indigo-600"></i> Quick Diagnostics
+        </h3>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center">
+                <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Log Freshness</span>
+                <span id="diag-freshness" class="text-sm font-bold text-gray-700">—</span>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center">
+                <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Process ID</span>
+                <span id="diag-pid" class="text-sm font-bold text-gray-700">—</span>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center">
+                <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">Launchd Name</span>
+                <span class="text-xs font-bold text-gray-700 truncate block">com.han.pw</span>
+            </div>
+            <div class="p-3 bg-gray-50 rounded-lg border border-gray-100 text-center">
+                <span class="block text-[10px] text-gray-400 uppercase font-bold mb-1">API Status</span>
+                <span class="text-xs font-bold text-green-600">Connected</span>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function refreshDashboard() {
+        try {
+            const statusRes = await fetch('/api/status');
+            const data = await statusRes.json();
+
+            // Update Service Status
+            const stateText = document.getElementById('run-state-text');
+            const stateBadge = document.getElementById('run-state-badge');
+            const btnRunNow = document.getElementById('btn-run-now');
+
+            if (data.run_state === 'running') {
+                stateText.innerText = 'Running';
+                stateText.className = 'text-2xl font-bold text-blue-600';
+                stateBadge.innerText = 'Active';
+                stateBadge.className = 'ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-blue-100 text-blue-700';
+                btnRunNow.disabled = true;
+                btnRunNow.classList.add('opacity-50', 'cursor-not-allowed');
+            } else {
+                stateText.innerText = 'Idle';
+                stateText.className = 'text-2xl font-bold text-gray-900';
+                stateBadge.innerText = 'Ready';
+                stateBadge.className = 'ml-2 px-2 py-0.5 text-xs font-medium rounded-full bg-green-100 text-green-700';
+                btnRunNow.disabled = false;
+                btnRunNow.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+
+            document.getElementById('last-log-time').innerText = data.last_log_at ? new Date(data.last_log_at).toLocaleTimeString() : 'Never';
+
+            // Update Niche
+            if (data.active_niche) {
+                document.getElementById('niche-name').innerText = data.active_niche.name || 'N/A';
+                document.getElementById('niche-status').innerText = data.active_niche.status || 'active';
+                document.getElementById('niche-priority').innerText = data.active_niche.priority || '1';
+            }
+
+            // Update Notifications
+            const barkBadge = document.getElementById('bark-badge');
+            if (data.bark_configured) {
+                barkBadge.innerText = 'Bark: Configured';
+                barkBadge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-green-100 text-green-700';
+            } else {
+                barkBadge.innerText = 'Bark: Missing Key';
+                barkBadge.className = 'px-2 py-0.5 text-xs font-semibold rounded-full bg-red-100 text-red-700';
+            }
+
+            // Update Scheduler buttons
+            const btnStart = document.getElementById('btn-start');
+            const btnStop = document.getElementById('btn-stop');
+            if (data.launchd_active) {
+                btnStart.classList.add('hidden');
+                btnStop.classList.remove('hidden');
+            } else {
+                btnStart.classList.remove('hidden');
+                btnStop.classList.add('hidden');
+            }
+
+            // Update logs
+            const logRes = await fetch('/api/logs?limit=15');
+            const logData = await logRes.json();
+            const logContainer = document.getElementById('log-container');
+            logContainer.innerText = logData.logs.join('');
+            logContainer.scrollTop = logContainer.scrollHeight;
+
+        } catch (e) {
+            console.error('Failed to refresh dashboard', e);
+        }
+    }
+
+    async function runNow() {
+        const btn = document.getElementById('btn-run-now');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Starting...';
+
+        try {
+            const res = await fetch('/api/control/run-now', { method: 'POST' });
+            if (res.ok) {
+                setTimeout(refreshDashboard, 2000);
+            } else {
+                alert('Failed to start: ' + (await res.json()).message);
+            }
+        } catch (e) {
+            alert('Request failed');
+        } finally {
+            btn.innerHTML = '<i class="fas fa-play mr-2"></i> Run Now';
+            btn.disabled = false;
+        }
+    }
+
+    async function testNotify() {
+        try {
+            await fetch('/api/control/test-notify', { method: 'POST' });
+            alert('Test notification sent!');
+        } catch (e) { alert('Failed to send notification'); }
+    }
+
+    async function toggleScheduler(start) {
+        try {
+            const endpoint = start ? '/api/control/start' : '/api/control/stop';
+            const res = await fetch(endpoint, { method: 'POST' });
+            if (res.ok) {
+                refreshDashboard();
+            } else {
+                alert('Failed: ' + (await res.json()).message);
+            }
+        } catch (e) { alert('Request failed'); }
+    }
+
+    // Initial load and periodic refresh
+    refreshDashboard();
+    setInterval(refreshDashboard, 10000);
+</script>
+{% endblock %}

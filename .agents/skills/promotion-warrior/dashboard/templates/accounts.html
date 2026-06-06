@@ -1,0 +1,214 @@
+{% extends "layout.html" %}
+
+{% block title %}Accounts | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="space-y-8 relative">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-users mr-3 text-indigo-600"></i> Account Pool Management
+        </h2>
+        <button onclick="toggleAccountModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center shadow-sm">
+            <i class="fas fa-user-plus mr-2"></i> Add Account
+        </button>
+    </div>
+
+    <div id="accounts-container" class="space-y-8">
+        <div class="animate-pulse bg-white border border-gray-100 h-64 rounded-xl"></div>
+    </div>
+
+    <!-- Edit/Add Account Modal -->
+    <div id="account-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
+        <div class="bg-white rounded-xl shadow-xl p-8 max-w-md w-full m-4">
+            <div class="flex justify-between items-center mb-6">
+                <h3 id="account-modal-title" class="text-xl font-bold text-gray-900">Edit Account</h3>
+                <button onclick="toggleAccountModal(false)" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="account-form" onsubmit="saveAccount(event)" class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                        <select id="acc-platform" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="Reddit">Reddit</option>
+                            <option value="Twitter">X (Twitter)</option>
+                            <option value="TikTok">TikTok</option>
+                            <option value="Instagram">Instagram</option>
+                            <option value="Facebook">Facebook</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <select id="acc-status" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="cooldown:24h">Cooldown</option>
+                            <option value="banned">Banned</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
+                    <input type="text" id="acc-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. u/username">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Persona File</label>
+                        <input type="text" id="acc-persona" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="en_persona_2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit</label>
+                        <input type="number" id="acc-limit" value="15" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Proxy URL (Optional)</label>
+                    <input type="text" id="acc-proxy" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="http://user:pass@host:port or 'direct'">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
+                    <input type="text" id="acc-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Extra details...">
+                </div>
+
+                <div class="pt-4 flex justify-end space-x-3">
+                    <button type="button" onclick="toggleAccountModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="submit" id="btn-save-acc" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
+                        Save Account
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    let currentAccountsData = {};
+
+    function toggleAccountModal(show, platform = 'Reddit', name = '') {
+        const modal = document.getElementById('account-modal');
+        if (show) {
+            modal.classList.remove('hidden');
+            if (name) {
+                document.getElementById('account-modal-title').innerText = 'Edit Account';
+                // Find account data
+                const acc = currentAccountsData[platform.toLowerCase()].find(a => a.name === name);
+                if (acc) {
+                    document.getElementById('acc-platform').value = platform;
+                    document.getElementById('acc-name').value = acc.name;
+                    document.getElementById('acc-status').value = acc.status;
+                    document.getElementById('acc-persona').value = acc.persona;
+                    document.getElementById('acc-proxy').value = acc.proxy || 'direct';
+                    document.getElementById('acc-limit').value = acc.daily_limit || 15;
+                    document.getElementById('acc-notes').value = acc.notes || '';
+                }
+            } else {
+                document.getElementById('account-modal-title').innerText = 'Add Account';
+                document.getElementById('account-form').reset();
+            }
+        } else {
+            modal.classList.add('hidden');
+        }
+    }
+
+    async function loadAccounts() {
+        try {
+            const res = await fetch('/api/accounts');
+            const data = await res.json();
+            currentAccountsData = data.platforms;
+            const container = document.getElementById('accounts-container');
+
+            if (Object.keys(data.platforms).length > 0) {
+                container.innerHTML = Object.entries(data.platforms).map(([platform, accs]) => `
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-bold text-lg text-gray-900 capitalize flex items-center">
+                                <i class="fab fa-${platform.replace(' ', '-').toLowerCase()} mr-2 text-gray-400"></i> ${platform}
+                            </h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full text-sm text-left text-gray-500">
+                                <thead class="text-xs text-gray-700 uppercase bg-gray-50 font-bold border-b border-gray-200">
+                                    <tr>
+                                        <th class="px-4 py-3">Account</th>
+                                        <th class="px-4 py-3">Status</th>
+                                        <th class="px-4 py-3">Proxy</th>
+                                        <th class="px-4 py-3">Today</th>
+                                        <th class="px-4 py-3 text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${accs.map(acc => `
+                                        <tr class="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
+                                            <td class="px-4 py-3">
+                                                <p class="font-bold text-gray-900">${acc.name}</p>
+                                                <p class="text-[10px] text-gray-400 font-mono">${acc.persona}</p>
+                                            </td>
+                                            <td class="px-4 py-3">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${acc.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                                                    ${acc.status}
+                                                </span>
+                                            </td>
+                                            <td class="px-4 py-3 font-mono text-[10px] text-gray-500 truncate max-w-[100px]">${acc.proxy || 'direct'}</td>
+                                            <td class="px-4 py-3">
+                                                <div class="flex flex-col space-y-1">
+                                                    <span class="text-[10px] text-gray-400">Comments: <b class="text-indigo-600">${acc.comment_info}</b></span>
+                                                    <span class="text-[10px] text-gray-400">DMs: <b class="text-orange-600">${acc.dm_info}</b></span>
+                                                </div>
+                                            </td>
+                                            <td class="px-4 py-3 text-right">
+                                                <button onclick="toggleAccountModal(true, '${platform}', '${acc.name}')" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-md transition-all">Edit</button>
+                                            </td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                `).join('');
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function saveAccount(e) {
+        e.preventDefault();
+        const btn = document.getElementById('btn-save-acc');
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+
+        const payload = {
+            platform: document.getElementById('acc-platform').value,
+            name: document.getElementById('acc-name').value,
+            status: document.getElementById('acc-status').value,
+            persona: document.getElementById('acc-persona').value,
+            proxy: document.getElementById('acc-proxy').value,
+            daily_limit: parseInt(document.getElementById('acc-limit').value),
+            notes: document.getElementById('acc-notes').value
+        };
+
+        try {
+            const res = await fetch('/api/accounts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                toggleAccountModal(false);
+                loadAccounts();
+            } else { alert('Failed to save account'); }
+        } catch (e) { alert('Request failed'); }
+        finally {
+            btn.innerHTML = 'Save Account';
+            btn.disabled = false;
+        }
+    }
+
+    loadAccounts();
+</script>
+{% endblock %}

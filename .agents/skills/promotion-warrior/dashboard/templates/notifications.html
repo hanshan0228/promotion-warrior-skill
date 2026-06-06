@@ -1,0 +1,91 @@
+{% extends "layout.html" %}
+
+{% block title %}Notifications | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Channel Configuration -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="font-bold text-gray-900 mb-6 flex items-center">
+            <i class="fas fa-satellite-dish mr-2 text-indigo-600"></i> Notification Channels
+        </h3>
+        <div id="channels-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="animate-pulse bg-gray-50 h-24 rounded-xl"></div>
+            <div class="animate-pulse bg-gray-50 h-24 rounded-xl"></div>
+            <div class="animate-pulse bg-gray-50 h-24 rounded-xl"></div>
+        </div>
+    </div>
+
+    <!-- Alert Rules -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i> P0 - Critical Alerts
+            </h3>
+            <div id="p0-rules" class="space-y-3">
+                <p class="text-sm text-gray-500">Loading rules...</p>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-info-circle mr-2 text-orange-500"></i> P1 - Important
+            </h3>
+            <div id="p1-rules" class="space-y-3">
+                <p class="text-sm text-gray-500">Loading rules...</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function loadNotifications() {
+        try {
+            const res = await fetch('/api/notifications/summary');
+            const data = await res.json();
+
+            // Channels
+            const channelsContainer = document.getElementById('channels-container');
+            if (Object.keys(data.channels).length > 0) {
+                channelsContainer.innerHTML = Object.entries(data.channels).map(([name, conf]) => `
+                    <div class="p-4 rounded-xl border ${conf.enabled ? 'bg-green-50 border-green-100' : 'bg-gray-50 border-gray-100 opacity-60'}">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-sm font-bold uppercase text-gray-700">${name}</span>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${conf.enabled ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}">
+                                ${conf.enabled ? 'ACTIVE' : 'DISABLED'}
+                            </span>
+                        </div>
+                        <div class="text-[10px] font-mono text-gray-500 truncate">
+                            ${Object.entries(conf).filter(([k]) => k !== 'enabled').map(([k, v]) => `${k}: ${v}`).join(' | ')}
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            // Rules
+            const renderRules = (rules, containerId) => {
+                const container = document.getElementById(containerId);
+                if (rules && rules.length > 0) {
+                    container.innerHTML = rules.map(r => `
+                        <div class="p-3 bg-gray-50 rounded-lg border border-gray-100">
+                            <p class="text-xs font-bold text-gray-900">${r.event}</p>
+                            <p class="text-xs text-gray-600 mt-1">${r.message}</p>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = '<p class="text-sm text-gray-400 italic">No rules defined</p>';
+                }
+            };
+
+            renderRules(data.p0_rules, 'p0-rules');
+            renderRules(data.p1_rules, 'p1-rules');
+
+        } catch (e) {
+            console.error('Failed to load notifications', e);
+        }
+    }
+    loadNotifications();
+</script>
+{% endblock %}

@@ -29,4 +29,4 @@ keywords:
 conversion:
   goal: "Lead Gen via Profile Guide"
   cta_en: "I actually wrote a quick guide on the 3 things that fixed my match rate (and the app I'm using now). Can DM it if you want?"
-  affiliate_link: "PLACEHOLDER_DATING_LINK"
+  affiliate_link: "https://dating-diagnostic-tool.surge.sh/"

@@ -1,0 +1,42 @@
+/* Promotion Warrior v4.0 Custom Styles */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+}
+
+/* Custom scrollbar for logs */
+pre::-webkit-scrollbar {
+    width: 8px;
+}
+pre::-webkit-scrollbar-track {
+    background: #1f2937;
+}
+pre::-webkit-scrollbar-thumb {
+    background: #4b5563;
+    border-radius: 4px;
+}
+pre::-webkit-scrollbar-thumb:hover {
+    background: #6b7280;
+}
+
+/* Transitions */
+.transition-all {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card hover effect */
+.hover-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+}
+
+/* Animation for status dots */
+@keyframes pulse-custom {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+.animate-pulse-slow {
+    animation: pulse-custom 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}

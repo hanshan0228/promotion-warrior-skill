@@ -1,0 +1,72 @@
+{% extends "layout.html" %}
+
+{% block title %}Logs | Promotion Warrior{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+        <div>
+            <h3 class="font-bold text-gray-900 flex items-center">
+                <i class="fas fa-terminal mr-2 text-indigo-600"></i> Execution Logs
+            </h3>
+            <p class="text-xs text-gray-500 mt-1">Real-time output from /tmp/dating-monitor.log</p>
+        </div>
+        <div class="flex items-center space-x-3">
+            <div id="refresh-badge" class="hidden flex items-center text-indigo-600 text-xs font-bold bg-indigo-50 px-2 py-1 rounded-md">
+                <i class="fas fa-sync-alt fa-spin mr-1.5"></i> Refreshing
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+                <input type="checkbox" id="auto-refresh" class="sr-only peer" checked>
+                <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-indigo-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-indigo-600"></div>
+                <span class="ml-3 text-sm font-medium text-gray-500">Auto-refresh</span>
+            </label>
+            <button onclick="fetchLogs()" class="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    <div class="p-0">
+        <pre id="log-content" class="bg-gray-900 text-gray-300 p-6 font-mono text-sm overflow-x-auto leading-relaxed min-h-[60vh] max-h-[75vh] overflow-y-auto">Loading logs...</pre>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    async function fetchLogs() {
+        const badge = document.getElementById('refresh-badge');
+        badge.classList.remove('hidden');
+
+        try {
+            const res = await fetch('/api/logs?limit=300');
+            const data = await res.json();
+            const container = document.getElementById('log-content');
+
+            // Basic highlighting
+            const lines = data.logs.map(line => {
+                if (line.includes('✅')) return `<span class="text-green-400">${line}</span>`;
+                if (line.includes('❌') || line.includes('Error')) return `<span class="text-red-400">${line}</span>`;
+                if (line.includes('=========') || line.includes('---')) return `<span class="text-indigo-400 font-bold">${line}</span>`;
+                if (line.includes('Bark')) return `<span class="text-yellow-400">${line}</span>`;
+                return line;
+            });
+
+            container.innerHTML = lines.join('');
+            if (document.getElementById('auto-refresh').checked) {
+                container.scrollTop = container.scrollHeight;
+            }
+        } catch (e) {
+            console.error('Fetch failed', e);
+        } finally {
+            setTimeout(() => badge.classList.add('hidden'), 500);
+        }
+    }
+
+    fetchLogs();
+    setInterval(() => {
+        if (document.getElementById('auto-refresh').checked) {
+            fetchLogs();
+        }
+    }, 5000);
+</script>
+{% endblock %}
