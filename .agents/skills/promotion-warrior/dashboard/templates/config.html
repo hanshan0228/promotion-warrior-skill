@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
-{% block title %}Configuration | Promotion Warrior{% endblock %}
+{% block title %}配置详情 | Promotion Warrior{% endblock %}
+{% block header_title %}系统配置总览{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
@@ -8,7 +9,7 @@
         <!-- Niche Configuration -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-bullseye mr-2 text-indigo-600"></i> Active Niche
+                <i class="fas fa-bullseye mr-2 text-indigo-600"></i> 当前活跃 Niche
             </h3>
             <div id="niche-details" class="space-y-4">
                 <div class="animate-pulse flex space-x-4">
@@ -23,19 +24,19 @@
         <!-- Account Pool -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-users mr-2 text-indigo-600"></i> Active Accounts
+                <i class="fas fa-users mr-2 text-indigo-600"></i> 在线账号状态
             </h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm text-left text-gray-500">
                     <thead class="text-xs text-gray-700 uppercase bg-gray-50 font-bold">
                         <tr>
-                            <th class="px-4 py-2">Name</th>
-                            <th class="px-4 py-2">Status</th>
-                            <th class="px-4 py-2">Persona</th>
+                            <th class="px-4 py-2">名称</th>
+                            <th class="px-4 py-2">状态</th>
+                            <th class="px-4 py-2">人设</th>
                         </tr>
                     </thead>
                     <tbody id="accounts-table">
-                        <tr><td colspan="3" class="px-4 py-4 text-center">Loading accounts...</td></tr>
+                        <tr><td colspan="3" class="px-4 py-4 text-center">正在同步账号数据...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -45,15 +46,15 @@
     <!-- Paths and System Info -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-            <i class="fas fa-folder-open mr-2 text-indigo-600"></i> System Context
+            <i class="fas fa-folder-open mr-2 text-indigo-600"></i> 系统环境上下文
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div class="space-y-2">
-                <p class="text-xs font-bold text-gray-400 uppercase">Base Directory</p>
+                <p class="text-xs font-bold text-gray-400 uppercase">根工作目录 (Base Directory)</p>
                 <code id="base-dir" class="text-xs bg-gray-50 p-2 rounded block border border-gray-100 truncate">—</code>
             </div>
             <div class="space-y-2">
-                <p class="text-xs font-bold text-gray-400 uppercase">Main Engine</p>
+                <p class="text-xs font-bold text-gray-400 uppercase">核心巡查引擎</p>
                 <code class="text-xs bg-gray-50 p-2 rounded block border border-gray-100">enhanced-check.sh</code>
             </div>
         </div>
@@ -68,7 +69,6 @@
             const res = await fetch('/api/config/summary');
             const data = await res.json();
 
-            // Niche Details
             const nicheDetails = document.getElementById('niche-details');
             if (data.niche_info && data.niche_info.niches) {
                 const active = data.niche_info.niches.find(n => n.status === 'active') || data.niche_info.niches[0];
@@ -79,26 +79,25 @@
                     </div>
                     <div class="grid grid-cols-2 gap-4 mt-4 text-sm">
                         <div>
-                            <span class="text-gray-400 block">ID</span>
+                            <span class="text-gray-400 block">标识 ID</span>
                             <span class="font-bold font-mono">${active.id}</span>
                         </div>
                         <div>
-                            <span class="text-gray-400 block">Priority</span>
+                            <span class="text-gray-400 block">任务优先级</span>
                             <span class="font-bold">${active.priority}</span>
                         </div>
                         <div>
-                            <span class="text-gray-400 block">Start Date</span>
+                            <span class="text-gray-400 block">启动日期</span>
                             <span class="font-bold">${active.start_date}</span>
                         </div>
                         <div>
-                            <span class="text-gray-400 block">Config File</span>
+                            <span class="text-gray-400 block">配置文件</span>
                             <span class="font-bold font-mono text-[10px] break-all">${active.config_file}</span>
                         </div>
                     </div>
                 `;
             }
 
-            // Accounts Table
             const accountsTable = document.getElementById('accounts-table');
             if (data.accounts.length > 0) {
                 accountsTable.innerHTML = data.accounts.map(acc => `
@@ -111,7 +110,7 @@
                     </tr>
                 `).join('');
             } else {
-                accountsTable.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center">No active accounts found</td></tr>';
+                accountsTable.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center">暂无活跃账号</td></tr>';
             }
 
             document.getElementById('base-dir').innerText = data.base_dir;

@@ -1,31 +1,32 @@
 {% extends "layout.html" %}
 
-{% block title %}Analytics | Promotion Warrior{% endblock %}
+{% block title %}效果分析 | Promotion Warrior{% endblock %}
+{% block header_title %}数据与转化分析{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
     <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="fas fa-chart-line mr-3 text-indigo-600"></i> Funnel & Performance Analytics
+            <i class="fas fa-chart-line mr-3 text-indigo-600"></i> 流量漏斗与转化看板
         </h2>
     </div>
 
     <!-- Funnel Stats -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 class="font-bold text-gray-900 mb-6 flex items-center">
-            <i class="fas fa-filter mr-2 text-indigo-600"></i> Conversion Funnel
+            <i class="fas fa-filter mr-2 text-indigo-600"></i> 全局转化漏斗 (Funnel)
         </h3>
         <div class="overflow-x-auto">
             <table class="min-w-full text-sm text-left text-gray-500">
                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 font-bold border-b border-gray-200">
                     <tr>
-                        <th class="px-4 py-3">Stage (阶段)</th>
-                        <th class="px-4 py-3">Count (数量)</th>
-                        <th class="px-4 py-3">Conversion Rate (转化率)</th>
+                        <th class="px-4 py-3">转化阶段</th>
+                        <th class="px-4 py-3">动作数量</th>
+                        <th class="px-4 py-3">后续转化率</th>
                     </tr>
                 </thead>
                 <tbody id="funnel-table">
-                    <tr><td colspan="3" class="px-4 py-4 text-center">Loading...</td></tr>
+                    <tr><td colspan="3" class="px-4 py-4 text-center">数据加载中...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -35,21 +36,21 @@
         <!-- Platform Stats -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-6 flex items-center">
-                <i class="fas fa-share-nodes mr-2 text-indigo-600"></i> Platform Performance
+                <i class="fas fa-share-nodes mr-2 text-indigo-600"></i> 各平台引流效果
             </h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm text-left text-gray-500">
                     <thead class="text-[10px] text-gray-700 uppercase bg-gray-50 font-bold border-b border-gray-200">
                         <tr>
-                            <th class="px-3 py-2">Platform</th>
-                            <th class="px-3 py-2">Comments</th>
-                            <th class="px-3 py-2">Reply Rate</th>
-                            <th class="px-3 py-2">DMs</th>
-                            <th class="px-3 py-2">DM Reply Rate</th>
+                            <th class="px-3 py-2">平台</th>
+                            <th class="px-3 py-2">评论/回复</th>
+                            <th class="px-3 py-2">回复率</th>
+                            <th class="px-3 py-2">私信发出</th>
+                            <th class="px-3 py-2">私信回复率</th>
                         </tr>
                     </thead>
                     <tbody id="platform-table">
-                        <tr><td colspan="5" class="px-4 py-4 text-center">Loading...</td></tr>
+                        <tr><td colspan="5" class="px-4 py-4 text-center">数据加载中...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -58,20 +59,20 @@
         <!-- Persona Stats -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-6 flex items-center">
-                <i class="fas fa-user-secret mr-2 text-indigo-600"></i> Persona A/B Testing
+                <i class="fas fa-user-secret mr-2 text-indigo-600"></i> 人设 A/B 测试
             </h3>
             <div class="overflow-x-auto">
                 <table class="min-w-full text-sm text-left text-gray-500">
                     <thead class="text-[10px] text-gray-700 uppercase bg-gray-50 font-bold border-b border-gray-200">
                         <tr>
-                            <th class="px-3 py-2">Persona</th>
-                            <th class="px-3 py-2">Uses</th>
-                            <th class="px-3 py-2">Avg Reply Rate</th>
-                            <th class="px-3 py-2">Best Platform</th>
+                            <th class="px-3 py-2">人设 ID</th>
+                            <th class="px-3 py-2">选用次数</th>
+                            <th class="px-3 py-2">平均互动率</th>
+                            <th class="px-3 py-2">主攻平台</th>
                         </tr>
                     </thead>
                     <tbody id="persona-table">
-                        <tr><td colspan="4" class="px-4 py-4 text-center">Loading...</td></tr>
+                        <tr><td colspan="4" class="px-4 py-4 text-center">数据加载中...</td></tr>
                     </tbody>
                 </table>
             </div>
@@ -87,7 +88,6 @@
             const res = await fetch('/api/analytics');
             const data = await res.json();
 
-            // Render Funnel
             const funnelTable = document.getElementById('funnel-table');
             if (data.funnel && data.funnel.length > 0) {
                 funnelTable.innerHTML = data.funnel.map((row, idx) => `
@@ -103,10 +103,9 @@
                     </tr>
                 `).join('');
             } else {
-                funnelTable.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center">No funnel data available</td></tr>';
+                funnelTable.innerHTML = '<tr><td colspan="3" class="px-4 py-4 text-center">暂无漏斗记录</td></tr>';
             }
 
-            // Render Platforms
             const platTable = document.getElementById('platform-table');
             if (data.platforms && data.platforms.length > 0) {
                 platTable.innerHTML = data.platforms.map(row => `
@@ -119,10 +118,9 @@
                     </tr>
                 `).join('');
             } else {
-                platTable.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center">No platform data available</td></tr>';
+                platTable.innerHTML = '<tr><td colspan="5" class="px-4 py-4 text-center">暂无平台数据</td></tr>';
             }
 
-            // Render Personas
             const personaTable = document.getElementById('persona-table');
             if (data.personas && data.personas.length > 0) {
                 personaTable.innerHTML = data.personas.map(row => `
@@ -134,14 +132,11 @@
                     </tr>
                 `).join('');
             } else {
-                personaTable.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center">No persona data available</td></tr>';
+                personaTable.innerHTML = '<tr><td colspan="4" class="px-4 py-4 text-center">暂无人设数据</td></tr>';
             }
 
-        } catch (e) {
-            console.error('Failed to load analytics', e);
-        }
+        } catch (e) { console.error(e); }
     }
-
     loadAnalytics();
 </script>
 {% endblock %}

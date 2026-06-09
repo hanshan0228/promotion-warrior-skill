@@ -1,13 +1,14 @@
 {% extends "layout.html" %}
 
-{% block title %}Notifications | Promotion Warrior{% endblock %}
+{% block title %}告警通知 | Promotion Warrior{% endblock %}
+{% block header_title %}系统告警与通知配置{% endblock %}
 
 {% block content %}
 <div class="space-y-8">
     <!-- Channel Configuration -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 class="font-bold text-gray-900 mb-6 flex items-center">
-            <i class="fas fa-satellite-dish mr-2 text-indigo-600"></i> Notification Channels
+            <i class="fas fa-satellite-dish mr-2 text-indigo-600"></i> 通知渠道配置
         </h3>
         <div id="channels-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="animate-pulse bg-gray-50 h-24 rounded-xl"></div>
@@ -20,19 +21,19 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i> P0 - Critical Alerts
+                <i class="fas fa-exclamation-triangle mr-2 text-red-600"></i> P0 - 紧急告警 (Critical)
             </h3>
             <div id="p0-rules" class="space-y-3">
-                <p class="text-sm text-gray-500">Loading rules...</p>
+                <p class="text-sm text-gray-500">正在同步告警规则...</p>
             </div>
         </div>
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <h3 class="font-bold text-gray-900 mb-4 flex items-center">
-                <i class="fas fa-info-circle mr-2 text-orange-500"></i> P1 - Important
+                <i class="fas fa-info-circle mr-2 text-orange-500"></i> P1 - 重要通知 (Important)
             </h3>
             <div id="p1-rules" class="space-y-3">
-                <p class="text-sm text-gray-500">Loading rules...</p>
+                <p class="text-sm text-gray-500">正在同步通知规则...</p>
             </div>
         </div>
     </div>
@@ -54,7 +55,7 @@
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-bold uppercase text-gray-700">${name}</span>
                             <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${conf.enabled ? 'bg-green-200 text-green-800' : 'bg-gray-200 text-gray-600'}">
-                                ${conf.enabled ? 'ACTIVE' : 'DISABLED'}
+                                ${conf.enabled ? '已启用' : '已禁用'}
                             </span>
                         </div>
                         <div class="text-[10px] font-mono text-gray-500 truncate">
@@ -75,7 +76,7 @@
                         </div>
                     `).join('');
                 } else {
-                    container.innerHTML = '<p class="text-sm text-gray-400 italic">No rules defined</p>';
+                    container.innerHTML = '<p class="text-sm text-gray-400 italic">暂无对应级别的告警规则</p>';
                 }
             };
 

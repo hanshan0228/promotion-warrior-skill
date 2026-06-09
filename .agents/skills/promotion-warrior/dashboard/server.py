@@ -5,6 +5,8 @@ import json
 import asyncio
 import subprocess
 import re
+import urllib.request
+import urllib.parse
 from datetime import datetime
 from typing import Optional, List, Dict
 from fastapi import FastAPI, Request, HTTPException
@@ -16,11 +18,12 @@ from pydantic import BaseModel
 app = FastAPI(title="Promotion Warrior Dashboard")
 
 # Paths
-BASE_DIR = "/Users/han/.agents/skills/promotion-warrior"
+BASE_DIR = "/Users/han/.cc-switch/skills/promotion-warrior"
 LOG_FILE = "/tmp/dating-monitor.log"
 DASHBOARD_DIR = os.path.join(BASE_DIR, "dashboard")
-PLIST_LABEL = "com.han.promotion-warrior"
+PLIST_LABEL = "com.han.promotion-dashboard"
 PLIST_PATH = os.path.expanduser(f"~/Library/LaunchAgents/{PLIST_LABEL}.plist")
+PYTHON_PATH = os.path.join(DASHBOARD_DIR, "venv/bin/python3")
 
 # Setup templates
 templates = Jinja2Templates(directory=os.path.join(DASHBOARD_DIR, "templates"))
@@ -28,40 +31,33 @@ app.mount("/static", StaticFiles(directory=os.path.join(DASHBOARD_DIR, "static")
 
 # Helpers
 def get_last_log_time():
-    if not os.path.exists(LOG_FILE):
-        return None
+    if not os.path.exists(LOG_FILE): return None
     return datetime.fromtimestamp(os.path.getmtime(LOG_FILE)).isoformat()
 
 def is_script_running():
     try:
         output = subprocess.check_output(["pgrep", "-f", "enhanced-check.sh"]).decode()
         return len(output.strip()) > 0
-    except:
-        return False
+    except: return False
 
 def check_launchd():
     try:
         output = subprocess.check_output(["launchctl", "list"]).decode()
         return PLIST_LABEL in output
-    except:
-        return False
+    except: return False
 
 def get_launchd_interval():
-    if not os.path.exists(PLIST_PATH):
-        return None
+    if not os.path.exists(PLIST_PATH): return None
     try:
         with open(PLIST_PATH, 'r') as f:
             content = f.read()
             match = re.search(r'<key>StartInterval</key>\s*<integer>(\d+)</integer>', content)
-            if match:
-                return int(match.group(1))
-    except:
-        pass
+            if match: return int(match.group(1))
+    except: pass
     return None
 
 def parse_markdown_yaml(file_path: str, marker: str) -> Optional[Dict]:
-    if not os.path.exists(file_path):
-        return None
+    if not os.path.exists(file_path): return None
     try:
         with open(file_path, 'r') as f:
             content = f.read()
@@ -69,19 +65,14 @@ def parse_markdown_yaml(file_path: str, marker: str) -> Optional[Dict]:
                 parts = content.split(marker)
                 if len(parts) > 1:
                     match = re.search(r"```(?:yaml)?\n(.*?)\n```", parts[1], re.DOTALL)
-                    if match:
-                        return yaml.safe_load(match.group(1))
-    except Exception as e:
-        print(f"Error parsing {file_path}: {e}")
+                    if match: return yaml.safe_load(match.group(1))
+    except Exception as e: print(f"Error parsing {file_path}: {e}")
     return None
 
 def write_markdown_yaml(file_path: str, marker: str, data: Dict) -> bool:
-    if not os.path.exists(file_path):
-        return False
+    if not os.path.exists(file_path): return False
     try:
-        with open(file_path, 'r') as f:
-            content = f.read()
-
+        with open(file_path, 'r') as f: content = f.read()
         if marker in content:
             parts = content.split(marker)
             if len(parts) > 1:
@@ -91,11 +82,9 @@ def write_markdown_yaml(file_path: str, marker: str, data: Dict) -> bool:
                     return f"{match.group(1)}{yaml_str}{match.group(3)}"
                 new_part = re.sub(yaml_block_pattern, replace_yaml, parts[1], count=1, flags=re.DOTALL)
                 new_content = parts[0] + marker + new_part
-                with open(file_path, 'w') as f:
-                    f.write(new_content)
+                with open(file_path, 'w') as f: f.write(new_content)
                 return True
-    except Exception as e:
-        print(f"Error writing {file_path}: {e}")
+    except Exception as e: print(f"Error writing {file_path}: {e}")
     return False
 
 def count_in_markdown_table(file_path: str, section: str) -> int:
@@ -111,356 +100,283 @@ def count_in_markdown_table(file_path: str, section: str) -> int:
     return 0
 
 def parse_markdown_table(file_path: str, section_header: str) -> List[Dict]:
-    if not os.path.exists(file_path):
-        return []
+    if not os.path.exists(file_path): return []
     try:
-        with open(file_path, 'r') as f:
-            content = f.read()
-        if section_header not in content:
-            return []
+        with open(file_path, 'r') as f: content = f.read()
+        if section_header not in content: return []
         table_part = content.split(section_header)[1].split("##")[0].strip()
         lines = [l.strip() for l in table_part.split('\n') if '|' in l and '---' not in l]
-        if not lines:
-            return []
+        if not lines: return []
         headers = [h.strip() for h in lines[0].split('|')[1:-1]]
         data = []
         for line in lines[1:]:
             cells = [c.strip() for c in line.split('|')[1:-1]]
-            if len(cells) == len(headers):
-                data.append(dict(zip(headers, cells)))
+            if len(cells) == len(headers): data.append(dict(zip(headers, cells)))
         return data
-    except Exception as e:
-        print(f"Error parsing table {section_header} in {file_path}: {e}")
+    except Exception as e: print(f"Error parsing table {section_header} in {file_path}: {e}")
     return []
 
 # Models
-class ProjectStatusUpdate(BaseModel):
-    id: str
-    status: str
-
+class ProjectStatusUpdate(BaseModel): id: str; status: str
 class ProjectCreate(BaseModel):
-    name: str
-    notes: str
-    budget_daily_usd: float = 0.00
-    account_group: str = "group_default"
-    affiliate_link: str = ""
-    subreddits: str = ""
-    frustration_keywords: str = ""
-    intent_keywords: str = ""
-    reply_templates: str = ""
-
+    name: str; notes: str; budget_daily_usd: float = 0.00; account_group: str = "group_default"
+    affiliate_link: str = ""; subreddits: str = ""; frustration_keywords: str = ""; intent_keywords: str = ""; reply_templates: str = ""
 class AccountUpdate(BaseModel):
-    platform: str
-    name: str
-    status: str
-    persona: str
-    proxy: str = "direct"
-    daily_limit: int = 15
-    notes: str = ""
-
-class StartRequest(BaseModel):
-    interval_seconds: int = 1800
+    platform: str; name: str; status: str; persona: str; proxy: str = "direct"; daily_limit: int = 15; notes: str = ""
+class StartRequest(BaseModel): interval_seconds: int = 1800
+class SuggestRequest(BaseModel): product_name: str; product_description: str
+class ReplyRequest(BaseModel): platform: str = "reddit"; account_profile: str; thing_id: str; text: str
 
 # Routes
 @app.get("/", response_class=HTMLResponse)
-async def index(request: Request):
-    return templates.TemplateResponse(request=request, name="dashboard.html")
-
+async def index(request: Request): return templates.TemplateResponse(request=request, name="dashboard.html")
 @app.get("/logs", response_class=HTMLResponse)
-async def logs_page(request: Request):
-    return templates.TemplateResponse(request=request, name="logs.html")
-
+async def logs_page(request: Request): return templates.TemplateResponse(request=request, name="logs.html")
 @app.get("/notifications", response_class=HTMLResponse)
-async def notifications_page(request: Request):
-    return templates.TemplateResponse(request=request, name="notifications.html")
-
+async def notifications_page(request: Request): return templates.TemplateResponse(request=request, name="notifications.html")
 @app.get("/config", response_class=HTMLResponse)
-async def config_page(request: Request):
-    return templates.TemplateResponse(request=request, name="config.html")
-
+async def config_page(request: Request): return templates.TemplateResponse(request=request, name="config.html")
 @app.get("/schedule", response_class=HTMLResponse)
-async def schedule_page(request: Request):
-    return templates.TemplateResponse(request=request, name="schedule.html")
-
+async def schedule_page(request: Request): return templates.TemplateResponse(request=request, name="schedule.html")
 @app.get("/projects", response_class=HTMLResponse)
-async def projects_page(request: Request):
-    return templates.TemplateResponse(request=request, name="projects.html")
-
+async def projects_page(request: Request): return templates.TemplateResponse(request=request, name="projects.html")
 @app.get("/accounts", response_class=HTMLResponse)
-async def accounts_page(request: Request):
-    return templates.TemplateResponse(request=request, name="accounts.html")
-
+async def accounts_page(request: Request): return templates.TemplateResponse(request=request, name="accounts.html")
 @app.get("/analytics", response_class=HTMLResponse)
-async def analytics_page(request: Request):
-    return templates.TemplateResponse(request=request, name="analytics.html")
+async def analytics_page(request: Request): return templates.TemplateResponse(request=request, name="analytics.html")
+@app.get("/insights", response_class=HTMLResponse)
+async def insights_page(request: Request): return templates.TemplateResponse(request=request, name="insights.html")
+@app.get("/feed", response_class=HTMLResponse)
+async def feed_page(request: Request): return templates.TemplateResponse(request=request, name="feed.html")
+@app.get("/inbox", response_class=HTMLResponse)
+async def inbox_page(request: Request): return templates.TemplateResponse(request=request, name="inbox.html")
 
 # API
 @app.get("/api/status")
 async def get_status():
-    niche_manager_path = os.path.join(BASE_DIR, "niche_manager.md")
-    niche_info = parse_markdown_yaml(niche_manager_path, "## Niche 列表")
-    active_niche = None
-    if niche_info and 'niches' in niche_info:
-        active_niche = next((n for n in niche_info['niches'] if n.get('status') == 'active'), None)
+    niche_info = parse_markdown_yaml(os.path.join(BASE_DIR, "niche_manager.md"), "## Niche 列表")
+    active_niche = next((n for n in niche_info['niches'] if n.get('status') == 'active'), None) if niche_info else None
     bark_configured = False
     config_path = os.path.join(BASE_DIR, "config.md")
     if os.path.exists(config_path):
         with open(config_path, 'r') as f:
-            if re.search(r'key:\s*".+"', f.read()):
-                bark_configured = True
+            if re.search(r'key:\s*".+"', f.read()): bark_configured = True
     reply_path = os.path.join(BASE_DIR, "reply_monitor.md")
-    q_p0 = count_in_markdown_table(reply_path, "### P0")
-    q_p1 = count_in_markdown_table(reply_path, "### P1")
     return {
-        "run_state": "running" if is_script_running() else "idle",
-        "last_log_at": get_last_log_time(),
-        "active_niche": active_niche,
-        "bark_configured": bark_configured,
-        "launchd_active": check_launchd(),
-        "launchd_interval": get_launchd_interval(),
-        "queues": {"p0": q_p0, "p1": q_p1}
+        "run_state": "running" if is_script_running() else "idle", "last_log_at": get_last_log_time(),
+        "active_niche": active_niche, "bark_configured": bark_configured, "launchd_active": check_launchd(),
+        "launchd_interval": get_launchd_interval(), "queues": {"p0": count_in_markdown_table(reply_path, "### P0"), "p1": count_in_markdown_table(reply_path, "### P1")}
     }
 
+@app.get("/api/feed")
+async def get_lead_feed():
+    niche_info = parse_markdown_yaml(os.path.join(BASE_DIR, "niche_manager.md"), "## Niche 列表")
+    active_niche = next((n for n in niche_info.get('niches', []) if n.get('status') == 'active'), None) if niche_info else None
+    if not active_niche: return {"leads": []}
+    config_path = os.path.join(BASE_DIR, active_niche.get("config_file", ""))
+    config_data = {}
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            content = f.read()
+            match = re.search(r'```(?:yaml)?\n(.*?)\n```', content, re.DOTALL)
+            yaml_str = match.group(1) if match else content
+            try: config_data = yaml.safe_load(yaml_str) or {}
+            except: pass
+    leads = []
+    # --- Reddit ---
+    subreddits = config_data.get('target_audience', {}).get('subreddits', ['Tinder'])
+    target_sub = subreddits[0] if subreddits else "Tinder"
+    try:
+        output = subprocess.check_output(f"opencli reddit subreddit {target_sub} --limit 3 -f json", shell=True, text=True, stderr=subprocess.DEVNULL)
+        match = re.search(r'\[.*\]', output, re.DOTALL)
+        if match:
+            for p in json.loads(match.group(0)):
+                text = p.get('selftext', p.get('title', ''))
+                score_out = subprocess.check_output(f"echo {json.dumps({'comment': text})} | {PYTHON_PATH} {BASE_DIR}/lead_scorer_v2.py {config_path}", shell=True, text=True, stderr=subprocess.DEVNULL)
+                score_res = json.loads(score_out)
+                draft = subprocess.check_output(f"{PYTHON_PATH} {BASE_DIR}/tools/dm_randomizer.py {target_sub} en_wingman https://link {config_path}", shell=True, text=True, stderr=subprocess.DEVNULL).strip()
+                leads.append({"platform": "reddit", "id": p.get('id'), "author": p.get('author'), "title": p.get('title'), "text": text, "url": p.get('url'), "score": score_res.get('score', 0), "grade": score_res.get('grade', 'C'), "factors": score_res.get('factors', []), "draft": draft})
+    except: pass
+    # --- Twitter/X ---
+    queries = list(config_data.get('scoring_rules', {}).get('frustration_keywords', {"dating apps suck": 30}).keys())
+    x_query = queries[0] if queries else "dating apps suck"
+    try:
+        x_out = subprocess.check_output(f"opencli twitter search '{x_query}' --limit 3 -f json", shell=True, text=True, stderr=subprocess.DEVNULL)
+        x_match = re.search(r'\[.*\]', x_out, re.DOTALL)
+        if x_match:
+            for t in json.loads(x_match.group(0)):
+                text = t.get('text', '')
+                score_out = subprocess.check_output(f"echo {json.dumps({'comment': text})} | {PYTHON_PATH} {BASE_DIR}/lead_scorer_v2.py {config_path}", shell=True, text=True, stderr=subprocess.DEVNULL)
+                score_res = json.loads(score_out)
+                draft = subprocess.check_output(f"{PYTHON_PATH} {BASE_DIR}/tools/dm_randomizer.py X_SNIPE en_wingman https://link {config_path}", shell=True, text=True, stderr=subprocess.DEVNULL).strip()
+                leads.append({"platform": "twitter", "id": t.get('id'), "author": t.get('author', 'unknown'), "title": "New Tweet", "text": text, "url": f"https://twitter.com/x/status/{t.get('id')}", "score": score_res.get('score', 0), "grade": score_res.get('grade', 'C'), "factors": score_res.get('factors', []), "draft": draft})
+    except: pass
+    leads.sort(key=lambda x: x['score'], reverse=True)
+    return {"leads": leads}
+
+@app.get("/api/inbox")
+async def get_inbox(platform: str = "reddit", profile: str = "bjudz9gq"):
+    if platform == "reddit":
+        js = "(async function(){ try { const r = await fetch('https://www.reddit.com/message/inbox/.json?limit=15', {credentials:'include'}); const d = await r.json(); return JSON.stringify(d?.data?.children || []); } catch(e) { return JSON.stringify({error: e.toString()}); } })()"
+    else: # twitter
+        js = "(async function(){ return JSON.stringify([]); })()" # Mock for now
+    try:
+        output = subprocess.check_output(f"opencli browser {profile} eval \"{js}\"", shell=True, text=True)
+        match = re.search(r'\[.*\]|\{.*\}', output, re.DOTALL)
+        if match:
+            try: return {"messages": json.loads(json.loads(match.group(0)))}
+            except: return {"messages": json.loads(match.group(0))}
+        return {"messages": []}
+    except: return {"messages": [], "error": "Fetch failed"}
+
+@app.post("/api/inbox/reply")
+async def send_reply(req: ReplyRequest):
+    safe_text = req.text.replace("'", "\\'").replace("\n", "\\n")
+    if req.platform == "reddit":
+        js = f"(async function(){{ try {{ const body = 'thing_id={req.thing_id}&text=' + encodeURIComponent('{safe_text}') + '&api_type=json'; const r = await fetch('https://www.reddit.com/api/comment', {{ method: 'POST', credentials: 'include', headers: {{'Content-Type': 'application/x-www-form-urlencoded'}}, body: body }}); return await r.text(); }} catch(e) {{ return e.toString(); }} }})()"
+    else: # twitter
+        js = "() => 'Not implemented'"
+    try:
+        output = subprocess.check_output(f"opencli browser {req.account_profile} eval \"{js}\"", shell=True, text=True)
+        return {"status": "success", "raw": output}
+    except Exception as e: raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/magic/suggest")
+async def magic_suggest(req: SuggestRequest):
+    config_path = os.path.join(BASE_DIR, "config.md")
+    api_key = None
+    if os.path.exists(config_path):
+        with open(config_path, 'r') as f:
+            match = re.search(r"sk-[a-zA-Z0-9]+", f.read())
+            if match: api_key = match.group(0)
+    if not api_key: raise HTTPException(status_code=400, detail="API Key not found")
+    prompt = f"Expert Reddit growth advice for ProductName: {req.product_name}, Description: {req.product_description}. Return JSON: {{\"keywords\":[], \"subreddits\":[]}}"
+    url = "https://api.deepseek.com/chat/completions"
+    data = json.dumps({"model": "deepseek-chat", "messages": [{"role": "system", "content": prompt}], "response_format": {"type": "json_object"}}).encode('utf-8')
+    req_obj = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"})
+    try:
+        with urllib.request.urlopen(req_obj) as response:
+            return json.loads(json.loads(response.read().decode('utf-8'))['choices'][0]['message']['content'])
+    except: raise HTTPException(status_code=500, detail="API Error")
+
 @app.get("/api/projects")
-async def get_projects():
-    niche_manager_path = os.path.join(BASE_DIR, "niche_manager.md")
-    niche_info = parse_markdown_yaml(niche_manager_path, "## Niche 列表")
-    return {"projects": niche_info.get('niches', []) if niche_info else []}
+async def get_projects(): return {"projects": parse_markdown_yaml(os.path.join(BASE_DIR, "niche_manager.md"), "## Niche 列表").get('niches', [])}
 
 @app.post("/api/projects")
 async def create_project(project: ProjectCreate):
     niche_manager_path = os.path.join(BASE_DIR, "niche_manager.md")
     niche_info = parse_markdown_yaml(niche_manager_path, "## Niche 列表")
-    if not niche_info or 'niches' not in niche_info: niche_info = {'niches': []}
     project_id = re.sub(r'[^a-z0-9]', '_', project.name.lower())
-    if any(n.get('id') == project_id for n in niche_info['niches']):
-        project_id = f"{project_id}_{int(datetime.now().timestamp())}"
     project_dir = os.path.join(BASE_DIR, "niches", project_id)
     os.makedirs(project_dir, exist_ok=True)
     config_path = os.path.join(project_dir, "config.md")
-    config_obj = {
-        "niche": project.name, "timezone": "America/New_York",
-        "conversion": { "affiliate_link": project.affiliate_link or "https://example.com" },
-        "target_audience": { "subreddits": [s.strip() for s in project.subreddits.split(',')] if project.subreddits else ["entrepreneur", "SaaS"] },
-        "scoring_rules": {
-            "frustration_keywords": {k.strip(): 30 for k in project.frustration_keywords.split(',')} if project.frustration_keywords else {"zero traffic": 30, "no sales": 30},
-            "intent_keywords": [k.strip() for k in project.intent_keywords.split(',')] if project.intent_keywords else ["how", "help", "recommend"]
-        },
-        "responses": {
-            "FIX": { "en_wingman": [r.strip() for r in project.reply_templates.split('\n') if r.strip()] if project.reply_templates else ["Hey, check out my bio for a tool that solves this!"] }
-        }
-    }
-    if not os.path.exists(config_path):
-        with open(config_path, 'w') as f:
-            f.write(f"# Config: {project.name}\n\n```yaml\n")
-            yaml.dump(config_obj, f, allow_unicode=True, sort_keys=False)
-            f.write("```\n")
-    new_niche = {
-        "id": project_id, "name": project.name, "status": "inactive", "priority": 2,
-        "account_group": project.account_group, "config_file": f"niches/{project_id}/config.md",
-        "budget_daily_usd": project.budget_daily_usd, "start_date": datetime.now().strftime("%Y-%m-%d"),
-        "notes": project.notes
-    }
+    config_obj = {"niche": project.name, "conversion": { "affiliate_link": project.affiliate_link or "" }, "target_audience": { "subreddits": [s.strip() for s in project.subreddits.split(',')] if project.subreddits else [] }, "scoring_rules": { "frustration_keywords": {k.strip(): 30 for k in project.frustration_keywords.split(',')} if project.frustration_keywords else {}, "intent_keywords": [k.strip() for k in project.intent_keywords.split(',')] if project.intent_keywords else [] }, "responses": { "FIX": { "en_wingman": [r.strip() for r in project.reply_templates.split('\n') if r.strip()] if project.reply_templates else ["I was in the exact same spot..."] } } }
+    with open(config_path, 'w') as f:
+        f.write(f"# Config: {project.name}\n\n```yaml\n")
+        yaml.dump(config_obj, f, allow_unicode=True, sort_keys=False)
+        f.write("```\n")
+    new_niche = {"id": project_id, "name": project.name, "status": "inactive", "priority": 2, "account_group": project.account_group, "config_file": f"niches/{project_id}/config.md", "notes": project.notes, "start_date": datetime.now().strftime("%Y-%m-%d")}
     niche_info['niches'].append(new_niche)
-    success = write_markdown_yaml(niche_manager_path, "## Niche 列表", niche_info)
-    if not success: raise HTTPException(status_code=500, detail="Failed to save project configuration")
-    return {"message": "Project created successfully", "project": new_niche}
+    write_markdown_yaml(niche_manager_path, "## Niche 列表", niche_info)
+    return {"message": "Created"}
 
 @app.post("/api/projects/toggle")
 async def toggle_project(update: ProjectStatusUpdate):
     niche_manager_path = os.path.join(BASE_DIR, "niche_manager.md")
     niche_info = parse_markdown_yaml(niche_manager_path, "## Niche 列表")
-    if not niche_info or 'niches' not in niche_info: raise HTTPException(status_code=404, detail="Projects configuration not found")
-    updated = False
     for n in niche_info['niches']:
-        if n.get('id') == update.id:
-            n['status'] = update.status
-            updated = True
-            break
-    if not updated: raise HTTPException(status_code=404, detail="Project not found")
-    success = write_markdown_yaml(niche_manager_path, "## Niche 列表", niche_info)
-    if not success: raise HTTPException(status_code=500, detail="Failed to save project configuration")
-    return {"message": f"Project {update.id} status updated to {update.status}", "projects": niche_info['niches']}
+        if n['id'] == update.id: n['status'] = update.status
+    write_markdown_yaml(niche_manager_path, "## Niche 列表", niche_info)
+    return {"message": "Updated"}
 
 @app.get("/api/projects/{project_id}/config")
 async def get_project_config(project_id: str):
-    config_path = os.path.join(BASE_DIR, "niches", project_id, "config.md")
-    if not os.path.exists(config_path): return {"config": {}}
-    with open(config_path, 'r') as f: content = f.read()
-    match = re.search(r"```(?:yaml)?\n(.*?)\n```", content, re.DOTALL)
-    yaml_str = match.group(1) if match else content
-    try:
-        data = yaml.safe_load(yaml_str)
-        return {"config": data if isinstance(data, dict) else {}}
-    except: return {"config": {}}
+    with open(os.path.join(BASE_DIR, "niches", project_id, "config.md"), 'r') as f:
+        m = re.search(r"```(?:yaml)?\n(.*?)\n```", f.read(), re.DOTALL)
+        return {"config": yaml.safe_load(m.group(1)) if m else {}}
 
 @app.post("/api/projects/{project_id}/config")
 async def update_project_config(project_id: str, request: Request):
     data = await request.json()
-    config_path = os.path.join(BASE_DIR, "niches", project_id, "config.md")
-    if os.path.exists(config_path):
-        with open(config_path, 'r') as f: content = f.read()
-        match = re.search(r"(```(?:yaml)?\n)(.*?)\n(```)", content, re.DOTALL)
-        if match:
-            yaml_str = yaml.dump(data, allow_unicode=True, sort_keys=False)
-            new_content = content[:match.start()] + match.group(1) + yaml_str + match.group(3) + content[match.end():]
-        else: new_content = yaml.dump(data, allow_unicode=True, sort_keys=False)
-    else:
-        os.makedirs(os.path.dirname(config_path), exist_ok=True)
-        new_content = yaml.dump(data, allow_unicode=True, sort_keys=False)
-    with open(config_path, 'w') as f: f.write(new_content)
-    return {"message": "Config updated"}
+    path = os.path.join(BASE_DIR, "niches", project_id, "config.md")
+    with open(path, 'r') as f: content = f.read()
+    m = re.search(r"(```(?:yaml)?\n)(.*?)\n(```)", content, re.DOTALL)
+    new_c = content[:m.start()] + m.group(1) + yaml.dump(data, allow_unicode=True) + m.group(3) + content[m.end():]
+    with open(path, 'w') as f: f.write(new_c)
+    return {"message": "Updated"}
+
+@app.get("/api/projects/{project_id}/insights")
+async def get_project_insights(project_id: str):
+    p = os.path.join(BASE_DIR, "niches", project_id, "insights.md")
+    return {"content": open(p).read() if os.path.exists(p) else "No insights."}
 
 @app.get("/api/accounts")
 async def get_accounts():
-    accounts_path = os.path.join(BASE_DIR, "accounts.md")
     platforms = {}
-    if os.path.exists(accounts_path):
-        with open(accounts_path, 'r') as f: content = f.read()
-        sections = re.split(r'##\s+', content)
+    with open(os.path.join(BASE_DIR, "accounts.md")) as f:
+        sections = re.split(r'##\s+', f.read())
         for sec in sections:
             lines = sec.strip().split('\n')
             if not lines: continue
-            platform_name = lines[0].strip()
-            platform_key = platform_name.split(' ')[0].lower()
-            platforms[platform_key] = []
-            for line in lines:
-                if line.startswith('|') and '---' not in line and '账号名' not in line:
-                    parts = [p.strip() for p in line.split('|')[1:-1]]
-                    if len(parts) >= 3:
-                        platforms[platform_key].append({
-                            'name': parts[0], 'status': parts[1], 'persona': parts[2],
-                            'comment_info': parts[3] if len(parts) > 3 else "0/0",
-                            'dm_info': parts[4] if len(parts) > 4 else "0/0",
-                            'proxy': parts[5] if len(parts) > 5 else "direct",
-                            'daily_limit': parts[6] if len(parts) > 6 else "15",
-                            'notes': parts[-1] if len(parts) > 7 else ""
-                        })
+            pk = lines[0].split(' ')[0].lower()
+            platforms[pk] = []
+            for l in lines:
+                if l.startswith('|') and '---' not in l and '账号名' not in l:
+                    p = [i.strip() for i in l.split('|')[1:-1]]
+                    if len(p) >= 3: platforms[pk].append({'name': p[0], 'status': p[1], 'persona': p[2], 'comment_info': p[3] if len(p)>3 else "0/0", 'dm_info': p[4] if len(p)>4 else "0/0", 'proxy': p[5] if len(p)>5 else "direct", 'daily_limit': p[6] if len(p)>6 else "15", 'notes': p[-1] if len(p)>7 else ""})
     return {"platforms": platforms}
 
 @app.post("/api/accounts")
 async def update_account(update: AccountUpdate):
-    accounts_path = os.path.join(BASE_DIR, "accounts.md")
-    if not os.path.exists(accounts_path): raise HTTPException(status_code=404, detail="accounts.md not found")
-    with open(accounts_path, 'r') as f: lines = f.readlines()
-    new_lines = []
-    in_target_platform = False
-    updated = False
-    for line in lines:
-        if line.startswith('## '): in_target_platform = update.platform.lower() in line.lower()
-        if in_target_platform and line.startswith('|') and f"| {update.name} |" in line:
-            parts = [p.strip() for p in line.split('|')]
-            # Column mapping: | (0) Name (1) Status (2) Persona (3) CommentCount (4) DMCount (5) Proxy (6) Limit (7) Notes (8) |
-            if len(parts) >= 9:
-                parts[2] = update.status
-                parts[3] = update.persona
-                parts[6] = update.proxy
-                parts[7] = str(update.daily_limit)
-                parts[8] = update.notes
-                new_lines.append('| ' + ' | '.join(parts[1:-1]) + ' |\n')
-                updated = True
-            else:
-                parts[2] = update.status
-                new_lines.append('| ' + ' | '.join(parts[1:-1]) + ' |\n')
-                updated = True
-        else: new_lines.append(line)
-    if not updated: # Maybe need to add as new? handled in a separate endpoint usually
-        pass
-    with open(accounts_path, 'w') as f: f.writelines(new_lines)
-    return {"message": "Account updated successfully"}
-
-@app.post("/api/accounts/add")
-async def add_account(update: AccountUpdate):
-    accounts_path = os.path.join(BASE_DIR, "accounts.md")
-    if not os.path.exists(accounts_path): raise HTTPException(status_code=404, detail="accounts.md not found")
-    with open(accounts_path, 'r') as f: content = f.read()
-    new_row = f"| {update.name} | {update.status} | {update.persona} | 0/15 | 0/5 | {update.proxy} | {update.daily_limit} | {update.notes} |\n"
-    # Find the platform section and append to its table
-    pattern = rf"(## {update.platform}.*?\n\|.*?\n\|.*?\n)"
-    if re.search(pattern, content, re.IGNORECASE | re.DOTALL):
-        new_content = re.sub(pattern, rf"\1{new_row}", content, count=1, flags=re.IGNORECASE | re.DOTALL)
-        with open(accounts_path, 'w') as f: f.write(new_content)
-        return {"message": "Account added"}
-    raise HTTPException(status_code=400, detail="Platform table not found in accounts.md")
-
-@app.get("/api/config/summary")
-async def get_config_summary():
-    niche_manager_path = os.path.join(BASE_DIR, "niche_manager.md")
-    niche_info = parse_markdown_yaml(niche_manager_path, "## Niche 列表")
-    accounts_path = os.path.join(BASE_DIR, "accounts.md")
-    accounts = []
-    if os.path.exists(accounts_path):
-        with open(accounts_path, 'r') as f:
-            for line in f:
-                if "|" in line and "---" not in line and "active" in line:
-                    parts = [p.strip() for p in line.split("|")]
-                    if len(parts) > 3: accounts.append({"name": parts[1], "status": parts[2], "persona": parts[3]})
-    return { "niche_info": niche_info, "accounts": accounts, "base_dir": BASE_DIR }
-
-@app.get("/api/notifications/summary")
-async def get_notifications_summary():
-    alert_path = os.path.join(BASE_DIR, "alert_system.md")
-    channels = parse_markdown_yaml(alert_path, "## 通知渠道配置")
-    p0_rules = parse_markdown_yaml(alert_path, "### P0")
-    p1_rules = parse_markdown_yaml(alert_path, "### P1")
-    if channels and "channels" in channels:
-        for c in channels["channels"]:
-            for k in channels["channels"][c]:
-                if "key" in k or "token" in k or "password" in k:
-                    val = str(channels["channels"][c][k])
-                    channels["channels"][c][k] = val[:4] + "****" if len(val) > 4 else "****"
-    return { "channels": channels.get("channels", {}) if channels else {}, "p0_rules": p0_rules.get("p0_alerts", []) if p0_rules else [], "p1_rules": p1_rules.get("p1_alerts", []) if p1_rules else [] }
-
-@app.get("/api/logs")
-async def get_logs(limit: int = 100):
-    if not os.path.exists(LOG_FILE): return {"logs": ["Log file not found at " + LOG_FILE]}
-    try:
-        with open(LOG_FILE, 'r') as f:
-            lines = f.readlines()
-            return {"logs": lines[-limit:]}
-    except: return {"logs": ["Error reading logs"]}
+    path = os.path.join(BASE_DIR, "accounts.md")
+    with open(path) as f: lines = f.readlines()
+    new_l = []; in_p = False
+    for l in lines:
+        if l.startswith('## '): in_p = update.platform.lower() in l.lower()
+        if in_p and l.startswith('|') and f"| {update.name} |" in l:
+            p = [i.strip() for i in l.split('|')]
+            p[2] = update.status; p[3] = update.persona; p[6] = update.proxy; p[7] = str(update.daily_limit); p[8] = update.notes
+            new_l.append('| ' + ' | '.join(p[1:-1]) + ' |\n')
+        else: new_l.append(l)
+    with open(path, 'w') as f: f.writelines(new_l)
+    return {"message": "Updated"}
 
 @app.get("/api/analytics")
 async def get_analytics():
-    perf_path = os.path.join(BASE_DIR, "performance.md")
-    return { "funnel": parse_markdown_table(perf_path, "**漏斗数据：**"), "platforms": parse_markdown_table(perf_path, "## 平台效果对比"), "personas": parse_markdown_table(perf_path, "## 人设效果对比"), "daily": parse_markdown_table(perf_path, "## 每日明细") }
+    p = os.path.join(BASE_DIR, "performance.md")
+    return {"funnel": parse_markdown_table(p, "**漏斗数据：**"), "platforms": parse_markdown_table(p, "## 平台效果对比"), "personas": parse_markdown_table(p, "## 人设效果对比")}
+
+@app.get("/api/notifications/summary")
+async def get_notifications_summary():
+    p = os.path.join(BASE_DIR, "alert_system.md")
+    return {"channels": parse_markdown_yaml(p, "## 通知渠道配置").get("channels", {}), "p0_rules": parse_markdown_yaml(p, "### P0").get("p0_alerts", []), "p1_rules": parse_markdown_yaml(p, "### P1").get("p1_alerts", [])}
+
+@app.get("/api/logs")
+async def get_logs(limit: int = 100):
+    lines = open(LOG_FILE).readlines() if os.path.exists(LOG_FILE) else ["No log."]
+    return {"logs": lines[-limit:]}
 
 @app.post("/api/control/run-now")
 async def run_now():
-    if is_script_running(): return JSONResponse(status_code=409, content={"message": "Script is already running"})
-    script_path = os.path.join(BASE_DIR, "enhanced-check.sh")
-    subprocess.Popen(["/bin/bash", script_path], start_new_session=True, cwd=BASE_DIR)
-    return {"message": "Started script execution"}
-
-@app.post("/api/control/test-notify")
-async def test_notify():
-    script_path = os.path.join(BASE_DIR, "enhanced-check.sh")
-    cmd = f"source {script_path}; bark '🧪 Dashboard Test' 'System is operational' 2>/dev/null"
-    subprocess.Popen(["/bin/bash", "-c", cmd], start_new_session=True)
-    return {"message": "Notification command sent"}
+    if is_script_running(): return JSONResponse(status_code=409, content={"message": "Already running"})
+    subprocess.Popen(["/bin/bash", os.path.join(BASE_DIR, "enhanced-check.sh")], start_new_session=True, cwd=BASE_DIR)
+    return {"message": "Started"}
 
 @app.post("/api/control/start")
 async def start_scheduler(req: Optional[StartRequest] = None):
-    interval = req.interval_seconds if req else 1800
-    script_path = os.path.join(BASE_DIR, "enhanced-check.sh")
-    plist_content = f"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-<plist version="1.0"><dict><key>Label</key><string>{PLIST_LABEL}</string><key>ProgramArguments</key><array><string>/bin/bash</string><string>{script_path}</string></array><key>StartInterval</key><integer>{interval}</integer><key>StandardOutPath</key><string>{LOG_FILE}</string><key>StandardErrorPath</key><string>{LOG_FILE}</string><key>WorkingDirectory</key><string>{BASE_DIR}</string></dict></plist>"""
-    try:
-        os.makedirs(os.path.dirname(PLIST_PATH), exist_ok=True)
-        with open(PLIST_PATH, 'w') as f: f.write(plist_content)
-        subprocess.run(["launchctl", "unload", PLIST_PATH], stderr=subprocess.DEVNULL)
-        subprocess.run(["launchctl", "load", PLIST_PATH], check=True)
-        return {"message": f"Scheduler started (every {interval//60}m)", "interval": interval}
-    except: raise HTTPException(status_code=500, detail="Failed to start launchd")
+    i = req.interval_seconds if req else 1800
+    with open(PLIST_PATH, 'w') as f: f.write(f'<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd"><plist version="1.0"><dict><key>Label</key><string>{PLIST_LABEL}</string><key>ProgramArguments</key><array><string>/bin/bash</string><string>{os.path.join(BASE_DIR, "enhanced-check.sh")}</string></array><key>StartInterval</key><integer>{i}</integer><key>StandardOutPath</key><string>{LOG_FILE}</string><key>StandardErrorPath</key><string>{LOG_FILE}</string><key>WorkingDirectory</key><string>{BASE_DIR}</string><key>KeepAlive</key><true/><key>RunAtLoad</key><true/></dict></plist>')
+    subprocess.run(["launchctl", "unload", PLIST_PATH], stderr=subprocess.DEVNULL)
+    subprocess.run(["launchctl", "load", PLIST_PATH])
+    return {"message": "Started"}
 
 @app.post("/api/control/stop")
 async def stop_scheduler():
-    try:
-        subprocess.run(["launchctl", "unload", PLIST_PATH], check=True)
-        if os.path.exists(PLIST_PATH): os.remove(PLIST_PATH)
-        return {"message": "Scheduler stopped and removed"}
-    except: raise HTTPException(status_code=500, detail="Failed to stop launchd")
+    subprocess.run(["launchctl", "unload", PLIST_PATH])
+    if os.path.exists(PLIST_PATH): os.remove(PLIST_PATH)
+    subprocess.run(["pkill", "-f", "enhanced-check.sh"])
+    subprocess.run(["pkill", "-f", "opencli"])
+    return {"message": "Stopped"}
 
 if __name__ == "__main__":
     import uvicorn

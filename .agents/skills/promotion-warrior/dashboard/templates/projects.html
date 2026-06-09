@@ -1,15 +1,16 @@
 {% extends "layout.html" %}
 
-{% block title %}Projects | Promotion Warrior{% endblock %}
+{% block title %}项目管理 | Promotion Warrior{% endblock %}
+{% block header_title %}项目管理中心{% endblock %}
 
 {% block content %}
 <div class="space-y-8 relative">
     <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="fas fa-layer-group mr-3 text-indigo-600"></i> Project Hub
+            <i class="fas fa-layer-group mr-3 text-indigo-600"></i> Niche 项目库
         </h2>
         <button onclick="toggleModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center shadow-sm">
-            <i class="fas fa-plus mr-2"></i> New Project
+            <i class="fas fa-plus mr-2"></i> 新建引流项目
         </button>
     </div>
 
@@ -21,7 +22,7 @@
     <div id="new-project-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
         <div class="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Create New Project</h3>
+                <h3 class="text-xl font-bold text-gray-900">新建引流项目</h3>
                 <button onclick="toggleModal(false)" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                 </button>
@@ -29,69 +30,75 @@
             <form id="new-project-form" onsubmit="createProject(event)" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-                        <input type="text" id="proj-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. SaaS Tool Affiliate">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="block text-sm font-medium text-gray-700">项目名称</label>
+                            <button type="button" onclick="magicSuggest(false)" id="btn-magic-new" class="text-[10px] text-indigo-600 hover:text-indigo-800 font-bold flex items-center">
+                                <i class="fas fa-wand-magic-sparkles mr-1"></i> AI 智能生成策略
+                            </button>
+                        </div>
+                        <input type="text" id="proj-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如: AI 视频工具推广">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate Link</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate 推广链接</label>
                         <input type="url" id="proj-link" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://...">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Target Subreddits (comma separated)</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">目标监控板块 (Subreddits, 逗号分隔)</label>
                     <input type="text" id="proj-subs" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="SaaS, entrepreneur, marketing">
                 </div>
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Frustration Keywords</label>
-                        <textarea id="proj-frust" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="zero traffic, no sales..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">用户痛点词 (Frustration Keywords)</label>
+                        <textarea id="proj-frust" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="没有流量, 没匹配, shadowbanned..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Intent Keywords</label>
-                        <textarea id="proj-intent" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="how, help, recommend..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">需求意图词 (Intent Keywords)</label>
+                        <textarea id="proj-intent" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="2" placeholder="求推荐, 怎么做, 有好用的工具吗..."></textarea>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Auto-Reply Templates (One per line)</label>
-                    <textarea id="proj-replies" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="Check out my bio for a tool that solves this!"></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">自动回复话术模板 (每行一条)</label>
+                    <textarea id="proj-replies" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="我也遇到过这个问题，我主页里有一份诊断清单你可以看看..."></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <input type="text" id="proj-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Description of the niche">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">备注说明</label>
+                    <input type="text" id="proj-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="项目的简单介绍">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Daily Budget ($)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">每日 API 预算 ($)</label>
                         <input type="number" id="proj-budget" value="0" step="0.1" min="0" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Account Group</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">账号组 (Account Group)</label>
                         <select id="proj-group" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="group_default">group_default</option>
-                            <option value="group_dating">group_dating</option>
-                            <option value="group_saas">group_saas</option>
+                            <option value="group_default">默认账号组</option>
+                            <option value="group_dating">约会专用组</option>
+                            <option value="group_saas">SaaS 专用组</option>
                         </select>
                     </div>
                 </div>
                 <div class="pt-4 flex justify-end space-x-3">
-                    <button type="button" onclick="toggleModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="button" onclick="toggleModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">取消</button>
                     <button type="submit" id="btn-submit-proj" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
-                        Create Project
+                        创建项目
                     </button>
                 </div>
             </form>
         </div>
     </div>
+
     <!-- Edit Config Modal -->
     <div id="edit-config-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
         <div class="bg-white rounded-xl shadow-xl p-8 max-w-2xl w-full m-4 max-h-[90vh] overflow-y-auto">
             <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-900">Edit Configuration: <span id="edit-config-title" class="text-indigo-600"></span></h3>
+                <h3 class="text-xl font-bold text-gray-900">编辑项目配置: <span id="edit-config-title" class="text-indigo-600"></span></h3>
                 <button onclick="toggleConfigModal(false)" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                 </button>
@@ -100,36 +107,36 @@
                 <input type="hidden" id="edit-config-id">
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate / Target Link</label>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Affiliate 推广链接</label>
                     <input type="url" id="conf-link" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="https://...">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Frustration Keywords (comma separated)</label>
-                        <textarea id="conf-frust" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="zero matches, shadowbanned, giving up..."></textarea>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">痛点关键词 (英文, 逗号分隔)</label>
+                        <textarea id="conf-frust" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="zero matches, shadowbanned..."></textarea>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Intent Keywords (comma separated)</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">需求意图词 (英文, 逗号分隔)</label>
                         <textarea id="conf-intent" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="3" placeholder="how, help, recommend..."></textarea>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Auto-Reply Templates (en_wingman) - One per line</label>
-                    <textarea id="conf-replies" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" placeholder="Bro, check my bio for a quick guide...\nMan, the algorithm is brutal..."></textarea>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">回复话术模板 (每行一个)</label>
+                    <textarea id="conf-replies" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="4" placeholder="I pinned a tool in my bio..."></textarea>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Raw YAML Config (Advanced)</label>
-                    <p class="text-[10px] text-gray-500 mb-2">Directly edit the niche's configuration YAML below. Be careful with indentation.</p>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">底层 YAML 源码 (高级编辑)</label>
+                    <p class="text-[10px] text-gray-500 mb-2">直接修改项目的 YAML 配置文件。请注意保持正确的缩进。</p>
                     <textarea id="conf-yaml" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" rows="6"></textarea>
                 </div>
 
                 <div class="pt-4 flex justify-end space-x-3">
-                    <button type="button" onclick="toggleConfigModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="button" onclick="toggleConfigModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">取消</button>
                     <button type="submit" id="btn-save-config" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
-                        Save Configuration
+                        保存并应用配置
                     </button>
                 </div>
             </form>
@@ -164,6 +171,45 @@
         }
     }
 
+    async function magicSuggest() {
+        const nameVal = document.getElementById('proj-name').value;
+        const descVal = document.getElementById('proj-notes').value;
+
+        if (!nameVal || !descVal) {
+            alert("请先填写项目名称和备注/简介。");
+            return;
+        }
+
+        const btn = document.getElementById('btn-magic-new');
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i> AI 分析中...';
+
+        try {
+            const res = await fetch('/api/magic/suggest', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ product_name: nameVal, product_description: descVal })
+            });
+            if (res.ok) {
+                const data = await res.json();
+                if (data.keywords) {
+                    document.getElementById('proj-intent').value = data.keywords.join(', ');
+                }
+                if (data.subreddits) {
+                    document.getElementById('proj-subs').value = data.subreddits.join(', ');
+                }
+            } else {
+                alert('建议生成失败。请确保 DeepSeek API Key 已配置。');
+            }
+        } catch (e) {
+            alert('网络请求失败。');
+        } finally {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        }
+    }
+
     async function loadConfigForProject(id) {
         const ta = document.getElementById('conf-yaml');
         const linkInp = document.getElementById('conf-link');
@@ -171,7 +217,7 @@
         const intentInp = document.getElementById('conf-intent');
         const repliesInp = document.getElementById('conf-replies');
 
-        ta.value = 'Loading...';
+        ta.value = '正在加载...';
         linkInp.value = '';
         frustInp.value = '';
         intentInp.value = '';
@@ -200,11 +246,9 @@
                 if (data.config.responses && data.config.responses.FIX && data.config.responses.FIX.en_wingman) {
                     repliesInp.value = data.config.responses.FIX.en_wingman.join('\n');
                 }
-            } else {
-                ta.value = '';
             }
         } catch (e) {
-            ta.value = 'Error loading configuration.';
+            ta.value = '加载失败。';
         }
     }
 
@@ -212,7 +256,7 @@
         e.preventDefault();
         const btn = document.getElementById('btn-save-config');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
 
         const id = document.getElementById('edit-config-id').value;
         const yamlStr = document.getElementById('conf-yaml').value;
@@ -244,7 +288,6 @@
                 configObj.responses.FIX.en_wingman = replies.split('\n').map(s => s.trim()).filter(Boolean);
             }
 
-            // Sync visual fields back to the YAML view before sending
             document.getElementById('conf-yaml').value = jsyaml.dump(configObj);
 
             const res = await fetch(`/api/projects/${id}/config`, {
@@ -255,14 +298,14 @@
 
             if (res.ok) {
                 toggleConfigModal(false);
-                alert('Configuration saved successfully!');
+                alert('配置已保存并生效！');
             } else {
-                alert('Failed to save config.');
+                alert('保存失败。');
             }
         } catch (error) {
-            alert('Invalid YAML format or network error.');
+            alert('YAML 格式错误。');
         } finally {
-            btn.innerHTML = 'Save Configuration';
+            btn.innerHTML = '保存并应用配置';
             btn.disabled = false;
         }
     }
@@ -271,7 +314,7 @@
         e.preventDefault();
         const btn = document.getElementById('btn-submit-proj');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Creating...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 正在创建...';
 
         const payload = {
             name: document.getElementById('proj-name').value,
@@ -295,12 +338,12 @@
                 toggleModal(false);
                 loadProjects();
             } else {
-                alert('Failed to create: ' + (await res.json()).detail);
+                alert('创建失败: ' + (await res.json()).detail);
             }
         } catch (error) {
-            alert('Request failed');
+            alert('网络请求失败。');
         } finally {
-            btn.innerHTML = 'Create Project';
+            btn.innerHTML = '创建项目';
             btn.disabled = false;
         }
     }
@@ -328,18 +371,18 @@
                         <div class="space-y-3 mb-6">
                             <p class="text-sm text-gray-600 line-clamp-2">${p.notes}</p>
                             <div class="flex space-x-4 text-xs">
-                                <div><span class="text-gray-400 block mb-0.5">Budget</span><span class="font-semibold text-gray-700">$${p.budget_daily_usd}/day</span></div>
-                                <div><span class="text-gray-400 block mb-0.5">Start Date</span><span class="font-semibold text-gray-700">${p.start_date}</span></div>
+                                <div><span class="text-gray-400 block mb-0.5">每日预算</span><span class="font-semibold text-gray-700">$${p.budget_daily_usd}</span></div>
+                                <div><span class="text-gray-400 block mb-0.5">开始日期</span><span class="font-semibold text-gray-700">${p.start_date}</span></div>
                             </div>
                         </div>
                         <div class="pt-4 border-t border-gray-50 flex justify-between items-center">
                             <span class="text-xs font-mono text-gray-400 truncate max-w-[150px]">${p.account_group}</span>
-                            <button onclick="toggleConfigModal(true, '${p.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold transition-colors">Edit Config</button>
+                            <button onclick="toggleConfigModal(true, '${p.id}')" class="text-indigo-600 hover:text-indigo-800 text-xs font-bold transition-colors">编辑配置</button>
                         </div>
                     </div>
                 `).join('');
             } else {
-                grid.innerHTML = '<div class="col-span-full p-8 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">No projects found. Create one to get started.</div>';
+                grid.innerHTML = '<div class="col-span-full p-8 text-center text-gray-500 bg-gray-50 rounded-xl border border-dashed border-gray-200">暂无项目。点击右上角新建。</div>';
             }
         } catch (e) {
             console.error('Failed to load projects', e);
@@ -355,11 +398,11 @@
                 body: JSON.stringify({ id, status })
             });
             if (!res.ok) {
-                alert('Failed to update status: ' + (await res.json()).detail);
-                loadProjects(); // Revert toggle visually
+                alert('操作失败');
+                loadProjects();
             }
         } catch (e) {
-            alert('Request failed');
+            alert('网络请求失败。');
             loadProjects();
         }
     }

@@ -48,7 +48,7 @@ def get_accounts_for_platform(platform: str) -> List[Dict]:
 
 def pick_account(platform: str, action_type: str = 'comment') -> Optional[Dict]:
     accounts = get_accounts_for_platform(platform)
-    active_accounts = [a for a in accounts if a['status'] == 'active']
+    active_accounts = [a for a in accounts if a['status'] in ['active', 'warming']]
 
     for acc in active_accounts:
         if action_type == 'comment':
@@ -98,7 +98,7 @@ if __name__ == "__main__":
         act = sys.argv[3] if len(sys.argv) > 3 else "comment"
         acc = pick_account(plat, act)
         if acc:
-            print(f"{acc['name']}|{acc['persona']}")
+            print(f"{acc['name']}|{acc['persona']}|{acc['status']}")
         else:
             sys.exit(1)
     elif cmd == "increment":

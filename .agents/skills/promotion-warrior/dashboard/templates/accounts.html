@@ -1,15 +1,16 @@
 {% extends "layout.html" %}
 
-{% block title %}Accounts | Promotion Warrior{% endblock %}
+{% block title %}账号管理 | Promotion Warrior{% endblock %}
+{% block header_title %}账号池管理{% endblock %}
 
 {% block content %}
 <div class="space-y-8 relative">
     <div class="flex justify-between items-center">
         <h2 class="text-2xl font-bold text-gray-900 flex items-center">
-            <i class="fas fa-users mr-3 text-indigo-600"></i> Account Pool Management
+            <i class="fas fa-users mr-3 text-indigo-600"></i> 全平台水军账号池
         </h2>
         <button onclick="toggleAccountModal(true)" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center shadow-sm">
-            <i class="fas fa-user-plus mr-2"></i> Add Account
+            <i class="fas fa-user-plus mr-2"></i> 添加新账号
         </button>
     </div>
 
@@ -21,7 +22,7 @@
     <div id="account-modal" class="fixed inset-0 bg-gray-900 bg-opacity-50 flex justify-center items-center z-50 hidden">
         <div class="bg-white rounded-xl shadow-xl p-8 max-w-md w-full m-4">
             <div class="flex justify-between items-center mb-6">
-                <h3 id="account-modal-title" class="text-xl font-bold text-gray-900">Edit Account</h3>
+                <h3 id="account-modal-title" class="text-xl font-bold text-gray-900">编辑账号详情</h3>
                 <button onclick="toggleAccountModal(false)" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times"></i>
                 </button>
@@ -29,56 +30,58 @@
             <form id="account-form" onsubmit="saveAccount(event)" class="space-y-4">
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Platform</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">所属平台</label>
                         <select id="acc-platform" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                             <option value="Reddit">Reddit</option>
                             <option value="Twitter">X (Twitter)</option>
                             <option value="TikTok">TikTok</option>
                             <option value="Instagram">Instagram</option>
                             <option value="Facebook">Facebook</option>
+                            <option value="YouTube">YouTube</option>
                         </select>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">当前状态</label>
                         <select id="acc-status" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                            <option value="cooldown:24h">Cooldown</option>
-                            <option value="banned">Banned</option>
+                            <option value="active">活跃 (Active)</option>
+                            <option value="inactive">禁用 (Inactive)</option>
+                            <option value="warming">养号 (Warming)</option>
+                            <option value="cooldown:24h">冷却中 (Cooldown)</option>
+                            <option value="banned">已封号 (Banned)</option>
                         </select>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
-                    <input type="text" id="acc-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="e.g. u/username">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">账号名称/ID</label>
+                    <input type="text" id="acc-name" required class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="例如: u/username">
                 </div>
 
                 <div class="grid grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Persona File</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">人设文件</label>
                         <input type="text" id="acc-persona" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="en_persona_2">
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Daily Limit</label>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">每日操作上限</label>
                         <input type="number" id="acc-limit" value="15" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Proxy URL (Optional)</label>
-                    <input type="text" id="acc-proxy" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="http://user:pass@host:port or 'direct'">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">专属代理 (Proxy URL)</label>
+                    <input type="text" id="acc-proxy" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="http://user:pass@host:port 或 'direct'">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Notes</label>
-                    <input type="text" id="acc-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder="Extra details...">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">备注说明</label>
+                    <input type="text" id="acc-notes" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" placeholder=" extra details...">
                 </div>
 
                 <div class="pt-4 flex justify-end space-x-3">
-                    <button type="button" onclick="toggleAccountModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">Cancel</button>
+                    <button type="button" onclick="toggleAccountModal(false)" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg text-sm font-semibold transition-colors">取消</button>
                     <button type="submit" id="btn-save-acc" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold transition-colors flex items-center">
-                        Save Account
+                        保存账号信息
                     </button>
                 </div>
             </form>
@@ -96,11 +99,11 @@
         if (show) {
             modal.classList.remove('hidden');
             if (name) {
-                document.getElementById('account-modal-title').innerText = 'Edit Account';
-                // Find account data
-                const acc = currentAccountsData[platform.toLowerCase()].find(a => a.name === name);
+                document.getElementById('account-modal-title').innerText = '编辑账号详情';
+                const platformKey = platform.toLowerCase().replace(' (twitter)', '');
+                const acc = currentAccountsData[platformKey].find(a => a.name === name);
                 if (acc) {
-                    document.getElementById('acc-platform').value = platform;
+                    document.getElementById('acc-platform').value = platform.split(' ')[0];
                     document.getElementById('acc-name').value = acc.name;
                     document.getElementById('acc-status').value = acc.status;
                     document.getElementById('acc-persona').value = acc.persona;
@@ -109,7 +112,7 @@
                     document.getElementById('acc-notes').value = acc.notes || '';
                 }
             } else {
-                document.getElementById('account-modal-title').innerText = 'Add Account';
+                document.getElementById('account-modal-title').innerText = '添加新账号';
                 document.getElementById('account-form').reset();
             }
         } else {
@@ -136,11 +139,11 @@
                             <table class="min-w-full text-sm text-left text-gray-500">
                                 <thead class="text-xs text-gray-700 uppercase bg-gray-50 font-bold border-b border-gray-200">
                                     <tr>
-                                        <th class="px-4 py-3">Account</th>
-                                        <th class="px-4 py-3">Status</th>
-                                        <th class="px-4 py-3">Proxy</th>
-                                        <th class="px-4 py-3">Today</th>
-                                        <th class="px-4 py-3 text-right">Actions</th>
+                                        <th class="px-4 py-3">账号名称</th>
+                                        <th class="px-4 py-3">当前状态</th>
+                                        <th class="px-4 py-3">专属代理</th>
+                                        <th class="px-4 py-3">今日统计</th>
+                                        <th class="px-4 py-3 text-right">操作</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -151,19 +154,21 @@
                                                 <p class="text-[10px] text-gray-400 font-mono">${acc.persona}</p>
                                             </td>
                                             <td class="px-4 py-3">
-                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${acc.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}">
+                                                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase
+                                                    ${acc.status === 'active' ? 'bg-green-100 text-green-700' :
+                                                      acc.status === 'warming' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-100 text-gray-500'}">
                                                     ${acc.status}
                                                 </span>
                                             </td>
                                             <td class="px-4 py-3 font-mono text-[10px] text-gray-500 truncate max-w-[100px]">${acc.proxy || 'direct'}</td>
                                             <td class="px-4 py-3">
                                                 <div class="flex flex-col space-y-1">
-                                                    <span class="text-[10px] text-gray-400">Comments: <b class="text-indigo-600">${acc.comment_info}</b></span>
-                                                    <span class="text-[10px] text-gray-400">DMs: <b class="text-orange-600">${acc.dm_info}</b></span>
+                                                    <span class="text-[10px] text-gray-400">评论: <b class="text-indigo-600">${acc.comment_info}</b></span>
+                                                    <span class="text-[10px] text-gray-400">私信: <b class="text-orange-600">${acc.dm_info}</b></span>
                                                 </div>
                                             </td>
                                             <td class="px-4 py-3 text-right">
-                                                <button onclick="toggleAccountModal(true, '${platform}', '${acc.name}')" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-md transition-all">Edit</button>
+                                                <button onclick="toggleAccountModal(true, '${platform}', '${acc.name}')" class="text-indigo-600 hover:text-indigo-900 text-xs font-bold bg-indigo-50 px-3 py-1 rounded-md transition-all">编辑</button>
                                             </td>
                                         </tr>
                                     `).join('')}
@@ -180,7 +185,7 @@
         e.preventDefault();
         const btn = document.getElementById('btn-save-acc');
         btn.disabled = true;
-        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> Saving...';
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i> 保存中...';
 
         const payload = {
             platform: document.getElementById('acc-platform').value,
@@ -201,10 +206,10 @@
             if (res.ok) {
                 toggleAccountModal(false);
                 loadAccounts();
-            } else { alert('Failed to save account'); }
-        } catch (e) { alert('Request failed'); }
+            } else { alert('保存失败，请检查后端日志'); }
+        } catch (e) { alert('网络请求异常'); }
         finally {
-            btn.innerHTML = 'Save Account';
+            btn.innerHTML = '保存账号信息';
             btn.disabled = false;
         }
     }

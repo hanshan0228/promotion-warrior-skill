@@ -9,16 +9,47 @@
 
 ```yaml
 niches:
-
-  - id: "dating_affiliate"
-    name: "MatchFix Dating Engine"
-    status: "active"
-    priority: 1
-    account_group: "group_dating"
-    config_file: "niches/dating/config.md"
-    budget_daily_usd: 0.00
-    start_date: "2026-05-23"
-    notes: "当前主力项目 — 全平台情感截流与约会 Affiliate"
+- id: dating_affiliate
+  name: MatchFix Dating Engine
+  status: inactive
+  priority: 1
+  account_group: group_dating
+  config_file: niches/dating/config.md
+  budget_daily_usd: 0.0
+  start_date: '2026-05-23'
+  notes: 当前主力项目 — 全平台情感截流与约会 Affiliate
+- id: ai_tool_cashback_sniper
+  name: AI Tool Cashback Sniper
+  status: inactive
+  priority: 2
+  account_group: group_saas
+  config_file: niches/ai_tool_cashback_sniper/config.md
+  notes: 拦截正在考虑订阅 ChatGPT, Canva, Notion 等 AI 工具的高净值用户，引导至返现平台。
+  start_date: '2026-06-08'
+- id: luxury_travel_sniper
+  name: Luxury Travel Sniper
+  status: active
+  priority: 2
+  account_group: group_default
+  config_file: niches/luxury_travel_sniper/config.md
+  notes: 拦截正在预订高端酒店、机酒比价的高净值用户，引导至返现平台并提供机酒叠加攻略。
+  start_date: '2026-06-08'
+- id: fintech___rewards_sniper
+  name: Fintech & Rewards Sniper
+  status: inactive
+  priority: 2
+  account_group: group_default
+  config_file: niches/fintech___rewards_sniper/config.md
+  notes: 拦截正在挑选高收益信用卡、理财工具或讨论开卡奖励的用户，引导至高端金融返现与推荐链接。
+  start_date: '2026-06-08'
+- id: high_end_tech_sniper
+  name: High-End Tech Sniper
+  status: active
+  priority: 2
+  account_group: group_default
+  config_file: niches/high_end_tech_sniper/config.md
+  notes: 拦截正在购买 MacBook, 摄影器材或高端家电的用户，引导至高额返现通道并分享价格追踪攻略。
+  start_date: '2026-06-08'
 ```
 
 ---

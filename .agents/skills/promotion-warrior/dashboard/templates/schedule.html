@@ -1,6 +1,7 @@
 {% extends "layout.html" %}
 
-{% block title %}Schedule | Promotion Warrior{% endblock %}
+{% block title %}自动化调度 | Promotion Warrior{% endblock %}
+{% block header_title %}后台自动化调度系统{% endblock %}
 
 {% block content %}
 <div class="max-w-4xl mx-auto space-y-8">
@@ -8,58 +9,58 @@
         <div class="inline-flex items-center justify-center p-4 bg-indigo-50 rounded-full mb-6 text-indigo-600">
             <i class="fas fa-calendar-check text-3xl"></i>
         </div>
-        <h2 class="text-2xl font-bold text-gray-900 mb-2">Service Scheduler</h2>
-        <p class="text-gray-500 max-w-md mx-auto mb-8">Manage how frequently the Dating Engine巡查 script runs in the background using macOS native launchd.</p>
+        <h2 class="text-2xl font-bold text-gray-900 mb-2">服务调度中心</h2>
+        <p class="text-gray-500 max-w-md mx-auto mb-8">在这里管理巡查脚本的运行频率。我们使用 macOS 原生的 launchd 技术，确保任务在后台稳定、静默地执行。</p>
 
         <div id="schedule-status-banner" class="p-6 rounded-2xl border-2 transition-all mb-8">
             <div class="flex items-center justify-center space-x-4">
                 <div id="schedule-dot" class="h-4 w-4 rounded-full"></div>
-                <span id="schedule-text" class="text-lg font-bold uppercase tracking-wider">Checking Status...</span>
+                <span id="schedule-text" class="text-lg font-bold uppercase tracking-wider">正在检查调度状态...</span>
             </div>
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-left mb-8">
             <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Cadence</p>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">执行频率 (Cadence)</p>
                 <div class="flex items-center space-x-2">
                     <select id="sched-interval" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-1 font-bold">
-                        <option value="900">Every 15 Minutes</option>
-                        <option value="1800" selected>Every 30 Minutes</option>
-                        <option value="3600">Every 1 Hour</option>
-                        <option value="7200">Every 2 Hours</option>
+                        <option value="900">每 15 分钟</option>
+                        <option value="1800" selected>每 30 分钟</option>
+                        <option value="3600">每 1 小时</option>
+                        <option value="7200">每 2 小时</option>
                     </select>
-                    <button onclick="updateInterval()" class="text-[10px] bg-indigo-600 text-white px-2 py-1 rounded font-bold hover:bg-indigo-700 transition-colors">Apply</button>
+                    <button onclick="updateInterval()" class="text-[10px] bg-indigo-600 text-white px-2 py-1 rounded font-bold hover:bg-indigo-700 transition-colors">立即应用</button>
                 </div>
             </div>
             <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                <p class="text-xs font-bold text-gray-400 uppercase mb-2">Target Script</p>
+                <p class="text-xs font-bold text-gray-400 uppercase mb-2">核心脚本</p>
                 <code class="text-xs font-bold text-indigo-600">enhanced-check.sh</code>
             </div>
         </div>
 
         <div id="schedule-action-area" class="flex justify-center">
             <button onclick="toggleSchedulerInPage(true)" id="btn-start-page" class="bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center">
-                <i class="fas fa-play-circle mr-2 text-lg"></i> Enable Background Patrol
+                <i class="fas fa-play-circle mr-2 text-lg"></i> 开启后台自动巡航
             </button>
             <button onclick="toggleSchedulerInPage(false)" id="btn-stop-page" class="hidden bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl text-sm font-bold transition-all shadow-md flex items-center">
-                <i class="fas fa-stop-circle mr-2 text-lg"></i> Disable Background Patrol
+                <i class="fas fa-stop-circle mr-2 text-lg"></i> 彻底关闭后台调度
             </button>
         </div>
     </div>
 
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 class="font-bold text-gray-900 mb-4">LaunchAgent Details</h3>
+        <h3 class="font-bold text-gray-900 mb-4">LaunchAgent 系统详情</h3>
         <div class="space-y-4">
             <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
-                <span class="text-gray-500 font-medium">Identifier</span>
+                <span class="text-gray-500 font-medium">服务标识符 (ID)</span>
                 <span class="font-mono font-bold text-gray-900 text-xs">com.han.promotion-warrior</span>
             </div>
             <div class="flex justify-between items-center text-sm border-b border-gray-50 pb-3">
-                <span class="text-gray-500 font-medium">Plist Location</span>
+                <span class="text-gray-500 font-medium">配置文件路径</span>
                 <span class="font-mono font-bold text-gray-900 text-[10px]">~/Library/LaunchAgents/...</span>
             </div>
             <div class="flex justify-between items-center text-sm">
-                <span class="text-gray-500 font-medium">Logs Redirection</span>
+                <span class="text-gray-500 font-medium">运行日志重定向</span>
                 <span class="font-mono font-bold text-indigo-600 text-xs">/tmp/dating-monitor.log</span>
             </div>
         </div>
@@ -83,7 +84,7 @@
             if (data.launchd_active) {
                 banner.className = 'p-6 rounded-2xl border-2 border-green-200 bg-green-50 mb-8';
                 dot.className = 'h-4 w-4 rounded-full bg-green-500 animate-pulse';
-                text.innerText = 'Scheduler Active';
+                text.innerText = '调度器已激活';
                 text.className = 'text-lg font-bold uppercase tracking-wider text-green-700';
                 btnStart.classList.add('hidden');
                 btnStop.classList.remove('hidden');
@@ -94,7 +95,7 @@
             } else {
                 banner.className = 'p-6 rounded-2xl border-2 border-gray-200 bg-gray-50 mb-8';
                 dot.className = 'h-4 w-4 rounded-full bg-gray-400';
-                text.innerText = 'Scheduler Inactive';
+                text.innerText = '调度器未启用';
                 text.className = 'text-lg font-bold uppercase tracking-wider text-gray-600';
                 btnStart.classList.remove('hidden');
                 btnStop.classList.add('hidden');
@@ -113,21 +114,20 @@
             });
             if (res.ok) {
                 checkSchedule();
-                alert(start ? 'Scheduler enabled!' : 'Scheduler disabled.');
+                alert(start ? '后台调度已开启！' : '后台调度已关闭。');
             } else {
-                alert('Failed to update scheduler.');
+                alert('调度操作失败。');
             }
-        } catch (e) { alert('Request failed'); }
+        } catch (e) { alert('请求失败'); }
     }
 
     async function updateInterval() {
-        // If already active, restart with new interval. If not, just alert.
         const res = await fetch('/api/status');
         const data = await res.json();
         if (data.launchd_active) {
             await toggleSchedulerInPage(true);
         } else {
-            alert('Interval selected. Enable the patrol to apply it.');
+            alert('频率已选中，开启巡航后将生效。');
         }
     }
 

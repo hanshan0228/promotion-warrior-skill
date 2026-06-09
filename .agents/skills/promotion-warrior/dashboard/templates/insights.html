@@ -1,0 +1,75 @@
+{% extends "layout.html" %}
+
+{% block title %}市场洞察 | Promotion Warrior{% endblock %}
+{% block header_title %}AI 市场洞察报告{% endblock %}
+
+{% block content %}
+<div class="space-y-8 relative">
+    <div class="flex justify-between items-center">
+        <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+            <i class="fas fa-lightbulb mr-3 text-yellow-500"></i> 自动化调研洞察
+        </h2>
+        <div class="flex space-x-4">
+            <select id="project-selector" onchange="loadInsights()" class="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-indigo-500 focus:border-indigo-500 p-2 font-bold shadow-sm">
+                <option value="">正在获取项目列表...</option>
+            </select>
+            <button onclick="loadInsights()" class="bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 px-4 py-2 rounded-lg text-sm font-semibold transition-colors flex items-center shadow-sm">
+                <i class="fas fa-sync-alt mr-2"></i> 刷新报告
+            </button>
+        </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8 min-h-[60vh]">
+        <div id="insights-container" class="prose max-w-none prose-indigo">
+            <div class="animate-pulse space-y-4">
+                <div class="h-4 bg-gray-200 rounded w-1/4"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+                <div class="h-4 bg-gray-200 rounded w-full"></div>
+                <div class="h-4 bg-gray-200 rounded w-full"></div>
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    async function init() {
+        try {
+            const res = await fetch('/api/projects');
+            const data = await res.json();
+            const selector = document.getElementById('project-selector');
+            if (data.projects && data.projects.length > 0) {
+                selector.innerHTML = data.projects.map(p => `<option value="${p.id}">${p.name}</option>`).join('');
+                loadInsights();
+            } else {
+                selector.innerHTML = '<option value="">暂无可用项目</option>';
+                document.getElementById('insights-container').innerHTML = '<p class="text-gray-500 italic">请先创建一个引流项目。</p>';
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async function loadInsights() {
+        const projectId = document.getElementById('project-selector').value;
+        if (!projectId) return;
+
+        const container = document.getElementById('insights-container');
+        container.innerHTML = '<div class="flex justify-center items-center h-32"><i class="fas fa-spinner fa-spin text-2xl text-indigo-600"></i><span class="ml-3 text-sm text-gray-500 font-bold">正在提取最新洞察...</span></div>';
+
+        try {
+            const res = await fetch(`/api/projects/${projectId}/insights`);
+            const data = await res.json();
+            if (data.content) {
+                container.innerHTML = marked.parse(data.content);
+            } else {
+                container.innerHTML = '<p class="text-gray-500 italic">暂未收集到足够的市场洞察。引擎正在持续监听高热度讨论帖...</p>';
+            }
+        } catch (e) {
+            container.innerHTML = '<p class="text-red-500">报告加载异常，请检查服务器连接。</p>';
+        }
+    }
+    init();
+</script>
+{% endblock %}

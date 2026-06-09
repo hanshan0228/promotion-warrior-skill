@@ -4,18 +4,19 @@ import re
 import yaml
 
 def get_random_response(keyword, persona, link, config_data):
-    # Default responses
+    # Default responses inspired by RedoraAI's anti-AI organic patterns
     responses = {
         "FIX": {
             "en_wingman": [
-                "Bro, your first photo might be killing your ELO score. I pinned a breakdown on my profile of how I bypassed the algorithm to get out of the 'zero matches' bucket. Check my bio, might save you some time.",
-                "Man, the algorithm right now is brutal if you don't optimize specifically for it. I put together a quick guide on my profile on the 3 things that actually work in 2026. Give it a look.",
-                "Most guys are swiping into a void because of how the apps are monetized now. Check the pinned post on my profile—I explained how to fix your match rate without paying for Platinum."
+                "I was in the exact same spot a while ago — felt like I was swiping into a void. Tried a bunch of profile tweaks, but what actually worked was optimizing for how the algorithm ranks new users. I pinned a breakdown on my profile if you want to check it out.",
+                "Honestly, the app that works best is the one where the algorithm doesn't shadowban average guys. I switched to a different setup and my match rate finally started to click. Happy to share the diagnostic tool I used if you check my bio.",
+                "We've all been there man. It's not you, it's the pay-to-win mechanics. I put together a quick checklist on my profile of the 3 things that actually trigger the algorithm to show your profile in 2026. Give it a look.",
+                "Are you using the same photos you used last year? The current algorithm penalizes stale content heavily. I've pinned a free diagnostic tool on my profile that helps identify exactly why you're being hidden. Might save you some time."
             ],
             "en_coach_1": [
-                "The psychology of current apps is broken, but you can optimize for it. I've pinned a detailed 'Intentional Matching' guide to my profile. Highly recommend giving it a read! 💡",
-                "It's not you, it's the algorithm. I've put a free diagnostic tool link in my bio that helps identify exactly why your profile is being hidden. Check it out. 🧠",
-                "Stop 'swiping' aimlessly. I wrote a breakdown on my profile of how to bypass the pay-to-win mechanics of these apps. Check my bio! ✨"
+                "And this is exactly why the psychology of current apps is broken. But you can optimize for it. I've pinned a detailed 'Intentional Matching' guide to my profile. Highly recommend giving it a read.",
+                "It's not you, it's the algorithm. I've put a free diagnostic tool link in my bio that helps identify exactly why your profile is being hidden. Check it out.",
+                "Stop swiping aimlessly. I wrote a breakdown on my profile of how to bypass the pay-to-win mechanics of these apps. Check my bio."
             ]
         }
     }
